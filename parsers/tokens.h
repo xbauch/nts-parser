@@ -1,4 +1,5 @@
 #include <string>
+#include <unordered_set>
 
 #include "Parser-Combinators/parser_combinators.hpp"
 #include "parsers/generals.h"
@@ -7,6 +8,9 @@
 
 //--------------------------------------------------
 //--------------------Tokens------------------------
+unordered_set< string > keywords =
+{ "forall", "exists", "int", "real", "bool", "true", "false", "and", "or", "imply",
+  "equiv", "not", "par", "in", "out", "tid", "initial", "final", "error", "havoc" };
 auto const forall_tok = tokenise( accept_str( "forall" ) );
 auto const exists_tok = tokenise( accept_str( "exists" ) );
 
@@ -18,6 +22,7 @@ auto const zero_tok = tokenise( accept( is_char( '0' ) ) );
 auto const numeral_tok = tokenise( some( accept( is_digit ) ) );
 
 auto const dot_tok = tokenise( accept( is_char( '.' ) ) );
+auto const semicolon_tok = tokenise( accept( is_char( ';' ) ) );
 auto const decimal_tok =
    (zero_tok || numeral_tok)
 && dot_tok
@@ -28,8 +33,9 @@ auto const false_tok = tokenise( accept_str( "false" ) );
 auto const boolean_tok = tokenise( accept_str( "false" ) || accept_str( "true" ) );
 
 auto const idn_tok =
-   tokenise( accept( is_alpha ) )
-&& tokenise( some( accept( is_alnum ) || accept( is_char( '_' ) ) ) );
+   reject_strs( keywords )
+  && accept( is_alpha )//tokenise( accept( is_alpha ) )
+&& tokenise( many( accept( is_alnum ) || accept( is_char( '_' ) ) ) );
 
 auto const idp_tok = idn_tok && tokenise( accept( is_char( '\'' ) ) );
 
@@ -39,6 +45,44 @@ auto const imply_tok = tokenise( accept_str( "imply" ) || accept_str( "->" ) );
 auto const equiv_tok = tokenise( accept_str( "equiv" ) || accept_str( "<->" ) );
 auto const not_tok =   tokenise( accept_str( "not" ) ||   accept_str( "!" ) );
 
+auto const round_left_tok = tokenise( accept( is_char( '(' ) ) );
+auto const round_right_tok = tokenise( accept( is_char( ')' ) ) );
+auto const curly_left_tok = tokenise( accept( is_char( '{' ) ) );
+auto const curly_right_tok = tokenise( accept( is_char( '}' ) ) );
+auto const square_left_tok = tokenise( accept( is_char( '[' ) ) );
+auto const square_right_tok = tokenise( accept( is_char( ']' ) ) );
+auto const colon_tok = tokenise( accept( is_char( ':' ) ) );
+auto const comma_tok = tokenise( accept( is_char( ',' ) ) );
+auto const square_right_left_tok = square_right_tok && square_left_tok;
+auto const bar_tok = tokenise( accept( is_char( '|' ) ) );
+
+auto const is_last = discard( tokenise( accept( is_eof ) ) );
+auto const empty_tok =  tokenise( accept_str( "" ) );
+
+auto const par_tok = tokenise( accept_str( "par" ) );
+auto const in_tok = tokenise( accept_str( "in" ) );
+auto const out_tok = tokenise( accept_str( "out" ) );
+auto const tid_tok = tokenise( accept_str( "tid" ) );
+auto const not_tid_tok = tokenise( reject_str( "tid" ) );
+
+auto const initial_tok = tokenise( accept_str( "initial" ) );
+auto const final_tok = tokenise( accept_str( "final" ) );
+auto const error_tok = tokenise( accept_str( "error" ) );
+auto const havoc_tok = tokenise( accept_str( "havoc" ) );
+
+auto const plus_tok =  tokenise( accept( is_char( '+' ) ) );
+auto const minus_tok = tokenise( accept( is_char( '-' ) ) );
+auto const times_tok = tokenise( accept( is_char( '*' ) ) );
+auto const div_tok =   tokenise( accept( is_char( '/' ) ) );
+auto const mod_tok =   tokenise( accept( is_char( '%' ) ) );
+
+auto const neq_tok = tokenise( accept_str( "!=" ) );
+auto const geq_tok = tokenise( accept_str( ">=" ) );
+auto const leq_tok = tokenise( accept_str( "<=" ) );
+
+auto const equal_tok = tokenise( accept( is_char( '=' ) ) );
+auto const lt_tok =    tokenise( accept( is_char( '<' ) ) );
+auto const gt_tok =    tokenise( accept( is_char( '>' ) ) );
 //-------------------------------------------------
 
 build_op< type, tkind::integer > bop_ti;
@@ -120,6 +164,7 @@ const build_variable< idn > bva_n;
 //--------------------Idn parser-------------------
 //<idn> ::= {a..z,A..Z}{a..z,A..Z,0..9,_}*
 const handle< idn > idn_idn() {
+  cout << "idn" << endl;
   return log( "<idn>", all( bva_n, idn_tok ) );
 }
 

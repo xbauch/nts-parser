@@ -89,8 +89,23 @@ T deitemise( const eref< T >& r ) {
 }
 
 template< typename T >
-size_t itemise( const T& r ) {
+eref< T > itemise( const T& r ) {
   return symbol_storage< T >.insert( r ).first;
+}
+
+template< typename T >
+using vref = std::vector< eref< T > >;
+
+template< typename T, char delim = ',', char open = '[', char close = ']' >
+std::ostream& operator<<( std::ostream& o, const vref< T >& x ) {
+  o << open;
+  for ( auto i = x.begin(); i != x.end(); i++ ) {
+    if ( i != x.begin() )
+      o << delim << " ";
+    o << deitemise< T >( *i ).print();
+  }
+  o << close;
+  return o;
 }
 
 struct symbol {
@@ -138,18 +153,16 @@ struct expression : symbol {
   }
 
   template< typename... Ts >
-  std::string printer( const std::tuple< Ts... >& in, vstr_t snd ) {
-    return printer( for_each< std::function< std::string ( expression ) >,
-                              std::tuple< Ts... >,
-                              std::string >( [] (expression e) { return e.print(); },
-                                             in),
+  string printer( const tuple< Ts... >& in, vstr_t snd ) {
+    return printer( for_each< string, Ts... >( [] (auto e) { return e.print(); },
+                                               in ),
                     snd );
   }
 
   template< typename FType, typename SType, typename... RType >
-  std::tuple< FType, SType, RType... > extract( size_t fst ) {
+  tuple< FType, SType, RType... > extract( size_t fst ) {
     return tuple_cat( make_tuple( deitemise< FType >( flat[ fst ] ) ),
-                           extract< SType, RType... >( fst + 1 ) );
+                      extract< SType, RType... >( fst + 1 ) );
   }
 
   template< typename T >
@@ -158,8 +171,8 @@ struct expression : symbol {
   }
 
   template< typename... Ts >
-  tuple< Ts... > extract() {
-    return extract< Ts... >( 1 );
+  tuple< Ts... > extractor( size_t fst = 1 ) {
+    return extract< Ts... >( fst );
   }
 
 };

@@ -1,5 +1,6 @@
 #include <functional>
 #include <vector>
+#include <tuple>
 
 #pragma once
 
@@ -26,4 +27,51 @@ vector< T > zip( vector< T > one, vector< T > two ) {
   for( ; i < longer.size(); i++ )
     ret.push_back( longer[ i ] );
   return ret;
+}
+
+template< typename Fun, typename OutT, typename... Ts, size_t... Is >
+vector< OutT > for_each( const tuple< Ts... >& tuple, Fun fun,
+                         index_sequence< Is... > ) {
+  vector< OutT > ret_vec = { OutT(), fun( get< Is >( tuple ) )... };
+  return vector< OutT >( ret_vec.begin() + 1, ret_vec.end() );
+}
+
+template< typename OutT, typename... Ts, typename F >
+vector< OutT > for_each( F f, const tuple< Ts... >& tuple ) {
+  return for_each< F, OutT >( tuple, f, make_index_sequence< sizeof...( Ts ) >() );
+}
+
+template< typename F, typename T >
+void map_inplace( F f, std::vector< T >& in ) {
+  for ( auto& e : in ) {
+    f( e );
+  }
+}
+
+template< typename Out, typename F, typename In >
+Out map( F f, In&, typename In::iterator fst, typename In::iterator lst ) {
+  Out o;
+  for( ; fst != lst; ++fst ) 
+    o.push_back( f( *fst ) );
+  return o;
+}
+
+template< typename Out, typename F, typename In >
+Out map( F f, In in ) { return map< Out >( f, in, in.begin(), in.end() ); }
+ 
+template< typename T >
+T cat( T first, T second ) {
+  std::copy( second.begin(), second.end(), std::back_inserter( first ) );
+  return first;
+}
+
+template< typename T, typename... Vs >
+T cat( T first, T second, Vs... vs ) {
+  std::copy( second.begin(), second.end(), std::back_inserter( first ) );
+  return cat( first, vs... );
+}
+
+template< typename Out, typename In >
+vector< Out > vconvert( vector< In > in ) {
+  return map< vector< Out > >( []( auto a ) { return Out( a ); }, in );
 }

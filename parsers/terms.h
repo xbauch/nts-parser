@@ -62,10 +62,11 @@ const handle< bool_lit > parser< bool_lit > =
 ||          id_bool_lit( reference( "id", parser< id > ) );
 //-------------------------------------------------
 
-build_binop< bool_term, bop, bool_term > bbi_bop;
+build_binop_as< bool_term, bop, bool_lit, bool_term > bbi_bop;
 build_itemise_true< bool_term, bool_term > bit_btn;
 build_itemise< bool_term, bool_term > bit_btp;
 build_itemise< bool_term, bool_lit > bit_btl;
+build_binop_par< bool_term, bop, bool_term > bbi_bpp;
 
 //-------------------------------------------------
 //--------------------Bool-term parser-------------
@@ -74,29 +75,40 @@ build_itemise< bool_term, bool_lit > bit_btl;
 //                <not> <bool-term> |
 //                <bool-term> <bop> <bool-term>
 handle< bool_term > const lit_boo( handle< bool_lit > hl ) {
-  return log( "bool-term-bool-it", all( bit_btl, hl ) );
+  return log( "bool-term-bool-lit", all( bit_btl, hl ) );
 }
   
 handle< bool_term > const par_boo( handle< bool_term > ht ) {
   return log( "bool-term-par", all( bit_btp, ht ) );
 }
 
+handle< bool_term > const par_boo2( handle< bool_term > ht,
+                                    handle< bop > ho ) {
+  return log( "bool-term-bop-par", all( bbi_bpp, ht, round_right_tok, ho, ht ) );
+}
+
 const handle< bool_term > not_boo( handle< bool_term > ht ) {
   return log( "bool-term-not", all( bit_btn, ht ) );
 }
 
-const handle< bool_term > bop_boo( handle< bool_term > ht, handle< bop > ho ) {
-  return log( "bool-term-bop", all( bbi_bop, ht, ho, ht ) );
+const handle< bool_term > bop_boo( handle< bool_lit > hl,
+                                   handle< bop > ho,
+                                   handle< bool_term > ht ) {
+  return log( "bool-term-bop", all( bbi_bop, hl, ho, ht ) );
 }
 
 template<>
 const handle< bool_term > parser< bool_term > =
-   attempt( discard( round_left_tok )
+   attempt( bop_boo( reference( "bool-lit", parser< bool_lit > ),
+                     reference( "bop", parser< bop > ),
+                     reference( "bool-term", parser< bool_term > ) ) )
+|| attempt( discard( not_tok ) &&
+            not_boo( reference( "bool-term", parser< bool_term > ) ) )
+|| attempt( discard( round_left_tok )
+         && par_boo2( reference( "bool-term", parser< bool_term > ),
+                      reference( "bop", parser< bop > ) ) )
+|| attempt( discard( round_left_tok )
          && par_boo( reference( "bool-term", parser< bool_term > ) )
          && discard( round_right_tok ) )
-|| attempt( discard( not_tok )
-         && not_boo( reference( "bool-term", parser< bool_term > ) ) )
-|| attempt( bop_boo( reference( "bool-term", parser< bool_term > ),
-                     reference( "bop", parser< bop > ) ) )
 ||          lit_boo( reference( "bool-lit", parser< bool_lit > ) );
 //-------------------------------------------------
