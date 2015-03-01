@@ -1,6 +1,7 @@
 #include <functional>
 #include <vector>
 #include <tuple>
+#include <algorithm>
 
 #pragma once
 
@@ -74,4 +75,11 @@ T cat( T first, T second, Vs... vs ) {
 template< typename Out, typename In >
 vector< Out > vconvert( vector< In > in ) {
   return map< vector< Out > >( []( auto a ) { return Out( a ); }, in );
+}
+
+template< typename Out, typename In >
+vector< Out > vconvert_reverse( vector< In > in ) {
+  vector< Out > o = map< vector< Out > >( []( auto a ) { return Out( a ); }, in );
+  reverse( o.begin(), o.end() );
+  return o;
 }

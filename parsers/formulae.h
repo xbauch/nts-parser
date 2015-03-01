@@ -6,136 +6,140 @@
 
 #pragma once
 
-build_op< quantifier, qkind::forall > bop_qf;
-build_op< quantifier, qkind::exists > bop_qe;
-
 //-------------------------------------------------
-//--------------------Quantifier parser------------
-//<quantifier> ::= { forall,
-//                   exists }
-const handle< quantifier > for_quant() {
-  return log( "forall", all( bop_qf, forall_tok ) );
-}
+//--------------------Quantifier syntax------------
+//<quantifier> ::= { forall, exists }
 
-const handle< quantifier > exi_quant() {
-  return log( "exists", all( bop_qe, exists_tok ) );
-}
+//----------Quantifier builders-----------
+template<>
+builder_t< quantifier, string >
+  builder< quantifier, string >;
 
+//----------Quantifier parser-------------
 template<>
 const handle< quantifier > parser< quantifier > =
-   attempt( for_quant() )
-||          exi_quant();
+   attempt( caller< quantifier >( "quantifier:forall",
+                                  forall_tok ) )
+||          caller< quantifier >( "quantifier:exists",
+                                  exists_tok );
 //--------------------------------------------------
 
-build_itemise< q_type, type > bit_qtt;
-build_itemise_three_ss< q_type, type, arith_term > bit_qta;
-
 //--------------------------------------------------
-//--------------------Quantified type parser--------
-//<q-type> ::= <type> |
-//             <type> [ <arith-term> , <arith-term> ]
-const handle< q_type > unb_q_type( handle< type > ht ) {
-  return log( "q-type-unbounded", all( bit_qtt, ht ) );
-}
+//--------------------Quantified type syntax--------
+//<q-type> ::= <type>
+//           | <type> [ <arith-term> , <arith-term> ]
 
-const handle< q_type > bou_q_type( handle< type > ht, handle< arith_term > ha ) {
-  return log( "q-type-bounded",
-              all( bit_qta, ht, square_left_tok, ha, comma_tok, ha ) );
-}
+//----------Quantified type builders------
+template<>
+builder_t< q_type, eref< type >, string, eref< arith_term >, string,
+           eref< arith_term >, string >
+  builder< q_type, eref< type >, string, eref< arith_term >, string,
+           eref< arith_term >, string >;
 
+template<>
+builder_t< q_type, eref< type > >
+  builder< q_type, eref< type > >;
+
+//----------Quantified type parser--------
 template<>
 const handle< q_type > parser< q_type > =
-   attempt( bou_q_type( reference( "type", parser< type > ),
-                        reference( "arith_term", parser< arith_term > ) )
-         && discard( square_right_tok ) )
-|| unb_q_type( reference( "type", parser< type > ) );
+   attempt( caller< q_type >( "q-type:bounded",
+                              reference( "type",       parser< type > ),
+                              square_left_tok,
+                              reference( "arith_term", parser< arith_term > ),
+                              comma_tok,
+                              reference( "arith_term", parser< arith_term > ),
+                              square_right_tok ) )
+||          caller< q_type >( "q-type:unbounded",
+                              reference( "type", parser< type > ) );
 //--------------------------------------------------
 
-build_itemise_three< formula, atom, bop, formula > bit_fab;
-build_itemise_three< formula, formula, bop, formula > bit_ffb;
-build_itemise_three_true< formula, formula, bop, formula > bit_fft;
-//build_itemise_four< formula, formula, bop, formula > bit_ffb;
-
-build_itemise< formula, atom > bit_fat;
-build_itemise< formula, formula > bit_fof;
-build_itemise_true< formula, formula > btt_fof;
-build_formula_bop bit_fob;
-build_formula bit_for;
-
 //--------------------------------------------------
-//--------------------Formula parser----------------
-//<formula> ::= <atom> |
-//              ( <formula> ) |
-//              <formula> <bop> <formula> |
-//              not <formula> |
-//              <quantifier> <idn-list> : <q-type> . <formula>
-const handle< formula > ato_bop_form( handle< atom > ha, handle< bop > hb,
-                                      handle< formula > hf ) {
-  return log( "for-ato-bop", all( bit_fab, ha, hb, hf ) );
-}
+//--------------------Formula syntax----------------
+//<formula> ::= <atom>
+//            | ( <formula> )
+//            | <formula> <bop> <formula>
+//            | not <formula>
+//            | <quantifier> <idn-list> : <q-type> . <formula>
 
-const handle< formula > par_bop_form( handle< formula > hf, handle< bop > hb ) {
-  return log( "for-par-bop", all( bit_ffb, hf, hb, hf ) );
-}
-
-const handle< formula > not_bop_form( handle< formula > hf, handle< bop > hb ) {
-  return log( "for-not-bop", all( bit_fft, hf, hb, hf ) );
-}
-
-const handle< formula > qua_bop_form( handle< quantifier > hq,
-                                      handle< idn_list > hi,
-                                      handle< q_type > ht,
-                                      handle< formula > hf,
-                                      handle< bop > hb ) {
-  return log( "for_qua_bop",
-              all( bit_fob, hq, hi, colon_tok, ht, dot_tok, hf, hb, hf ) );
-}
-
-const handle< formula > ato_form( handle< atom > ha ) {
-  return log( "for-ato", all( bit_fat, ha ) );
-}
-  
-const handle< formula > par_form( handle< formula > hf ) {
-  return log( "for-par", all( bit_fof, hf ) );
-}
-
-const handle< formula > not_form( handle< formula > hf ) {
-  return log( "for-not", all( btt_fof, hf ) );
-}
-
-handle< formula > const qua_form( handle< quantifier > hq,
-                                  handle< idn_list > hi,
-                                  handle< q_type > ht,
-                                  handle< formula > hf ) {
-  return log( "for-qua",
-              all( bit_for, hq, hi, colon_tok, ht, dot_tok, hf ) );
-}
+//----------Formula builders--------------
+template<>
+builder_t< formula, eref< atom >, eref< bop >, eref< formula > >
+  builder< formula, eref< atom >, eref< bop >, eref< formula > >;
 
 template<>
+builder_t< formula, string, eref< formula >, string, eref< bop >, eref< formula > >
+  builder< formula, string, eref< formula >, string, eref< bop >, eref< formula > >;
+
+template<>
+builder_t< formula, string, eref< formula >, eref< bop >, eref< formula > >
+  builder< formula, string, eref< formula >, eref< bop >, eref< formula > >;
+
+template<>
+builder_t< formula, eref< quantifier >, eref< idn_list >, string, eref< q_type >,
+           string, eref< formula >, eref< bop >, eref< formula > >
+  builder< formula, eref< quantifier >, eref< idn_list >, string, eref< q_type >,
+           string, eref< formula >, eref< bop >, eref< formula > >;
+
+template<>
+builder_t< formula, eref< atom > >
+  builder< formula, eref< atom > >;
+
+template<>
+builder_t< formula, string, eref< formula >, string >
+  builder< formula, string, eref< formula >, string >;
+
+template<>
+builder_t< formula, string, eref< formula > >
+  builder< formula, string, eref< formula > >;
+
+template<>
+builder_t< formula, eref< quantifier >, eref< idn_list >, string, eref< q_type >,
+           string, eref< formula > >
+  builder< formula, eref< quantifier >, eref< idn_list >, string, eref< q_type >,
+           string, eref< formula > >;
+
+//----------Formula parser----------------
+template<>
 const handle< formula > parser< formula > =
-   attempt( ato_bop_form( reference( "atom", parser< atom > ),
-                          reference( "bop", parser< bop > ),
-                          reference( "formula", parser< formula > ) ) )
-|| attempt( discard( round_left_tok )
-         && par_bop_form( reference( "formula", parser< formula > ),
-                          reference( "bop", parser< bop > ) ) )
-|| attempt( discard( not_tok )
-         && not_bop_form( reference( "formula", parser< formula > ),
-                          reference( "bop", parser< bop > ) ) )
-|| attempt( qua_bop_form( reference( "quantifier", parser< quantifier > ),
-                          reference( "idn_list", parser< idn_list > ),
-                          reference( "q_type", parser< q_type > ),
-                          reference( "formula", parser< formula > ),
-                          reference( "bop", parser< bop > ) ) )
-  
-|| attempt( ato_form( reference( "atom", parser< atom > ) ) )
-|| attempt( discard( round_left_tok )
-         && par_form( reference( "formula", parser< formula > ) )
-         && discard( round_right_tok ) )
-|| attempt( discard( not_tok )
-         && not_form( reference( "formula", parser< formula > ) ) )
-||          qua_form( reference( "quantifier", parser< quantifier > ),
-                      reference( "idn_list", parser< idn_list > ),
-                      reference( "q_type", parser< q_type > ),
-                      reference( "formula", parser< formula > ) );
+   attempt( caller< formula >( "formula:atom-bop",
+                               reference( "atom",    parser< atom > ),
+                               reference( "bop",     parser< bop > ),
+                               reference( "formula", parser< formula > ) ) )
+|| attempt( caller< formula >( "formula:parenthesised-bop",
+                               round_left_tok,
+                               reference( "formula", parser< formula > ),
+                               round_right_tok,
+                               reference( "bop",     parser< bop > ),
+                               reference( "formula", parser< formula > ) ) )
+|| attempt( caller< formula >( "formula:not-bop",
+                               not_tok,
+                               reference( "formula", parser< formula > ),
+                               reference( "bop",     parser< bop > ),
+                               reference( "formula", parser< formula > ) ) )
+|| attempt( caller< formula >( "formula:quantifier-bop",
+                               reference( "quantifier", parser< quantifier > ),
+                               reference( "idn_list",   parser< idn_list > ),
+                               colon_tok,
+                               reference( "q_type",     parser< q_type > ),
+                               dot_tok,
+                               reference( "formula",    parser< formula > ),
+                               reference( "bop",        parser< bop > ),
+                               reference( "formula",    parser< formula > ) ) )
+|| attempt( caller< formula >( "formula:atom",
+                               reference( "atom",    parser< atom > ) ) )
+|| attempt( caller< formula >( "formula:parenthesised",
+                               round_left_tok,
+                               reference( "formula", parser< formula > ),
+                               round_right_tok ) )
+|| attempt( caller< formula >( "formula:not",
+                               not_tok,
+                               reference( "formula", parser< formula > ) ) )
+||          caller< formula >( "formula:quantifier",
+                               reference( "quantifier", parser< quantifier > ),
+                               reference( "idn_list",   parser< idn_list > ),
+                               colon_tok,
+                               reference( "q_type",     parser< q_type > ),
+                               dot_tok,
+                               reference( "formula",    parser< formula > ) );
 //--------------------------------------------------

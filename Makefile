@@ -1,9 +1,11 @@
 CXX=clang++
 #CXX=g++
 #CFLAGS=-Wall -pedantic -g -ferror-limit=5 -DDEBUG
-CFLAGS=-g -ferror-limit=5 -DDEBUG
+CFLAGSDEBUG=-g -ferror-limit=5 -DDEBUG
+CFLAGSRELEASE=-O3
 #CFLAGS=-Wall -pedantic -g -fmax-errors=5
-CXXFLAGS:=$(CFLAGS) -I. -std=c++1z
+CXXFLAGS:=$(CFLAGSDEBUG) -I. -std=c++1z
+#CXXFLAGS:=$(CFLAGSRELEASE) -I. -std=c++1z
 TARGET=parser
 TOOLSOBJS=$(shell find tools -name '*.cpp' | sed s\/.cpp\$\/.o\/)
 TOOLSHEDS=$(shell find tools -name '*.h')

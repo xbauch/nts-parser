@@ -34,7 +34,7 @@ auto const boolean_tok = tokenise( accept_str( "false" ) || accept_str( "true" )
 
 auto const idn_tok =
    reject_strs( keywords )
-  && accept( is_alpha )//tokenise( accept( is_alpha ) )
+&& accept( is_alpha )
 && tokenise( many( accept( is_alnum ) || accept( is_char( '_' ) ) ) );
 
 auto const idp_tok = idn_tok && tokenise( accept( is_char( '\'' ) ) );
@@ -85,125 +85,125 @@ auto const lt_tok =    tokenise( accept( is_char( '<' ) ) );
 auto const gt_tok =    tokenise( accept( is_char( '>' ) ) );
 //-------------------------------------------------
 
-build_op< type, tkind::integer > bop_ti;
-build_op< type, tkind::real > bop_tr;
-build_op< type, tkind::boolean > bop_tb;
-
 //-------------------------------------------------
-//--------------------Type parser------------------
+//--------------------Type syntax------------------
 //<type> ::= {int,real,bool}
-const handle< type > int_typ() {
-  return log( "type-int", all( bop_ti, int_tok ) );
-}
 
-const handle< type > rea_typ() {
-  return log( "type-real", all( bop_tr, real_tok ) );
-}
+//----------Type builders-----------------
+template<>
+builder_t< type, string >
+  builder< type, string >;
 
-const handle< type > boo_typ() {
-  return log( "type-bool", all( bop_tb, bool_tok ) );
-}
-
+//----------Type parser-------------------
 template<>
 const handle< type > parser< type > =
-   attempt( int_typ() )
-|| attempt( rea_typ() )
-||          boo_typ();
+   attempt( caller< type >( "type:int",
+                            int_tok ) )
+|| attempt( caller< type >( "type:real",
+                            real_tok ) )
+||          caller< type >( "type:boolean",
+                            bool_tok );
 //-------------------------------------------------
 
-const build_constant< numeral > bco_n;
-
 //-------------------------------------------------
-//--------------------Numeral parser---------------
+//--------------------Numeral syntax---------------
 //<numeral> ::= {0} | {1..9}{0..9}*
-const handle< numeral > zer_num() {
-  return log( "numeral-zero", all( bco_n, zero_tok ) );
-}
 
-const handle< numeral > non_num() {
-  return log( "numeral-nonzero", all( bco_n, numeral_tok ) );
-}
+//----------Numeral builders--------------
+template<>
+builder_t< numeral, string >
+  builder< numeral, string >;
 
+//----------Numeral parser----------------
 template<>
 const handle< numeral > parser< numeral > =
-   attempt( zer_num() )
-||          non_num();
+            caller< numeral >( "numeral",
+                               numeral_tok );
 //-------------------------------------------------
 
-const build_constant< decimal > bco_d;
-
 //-------------------------------------------------
-//--------------------Decimal parser---------------
+//--------------------Decimal syntax---------------
 //<decimal> ::= <numeral> {.}{0..9}+
-const handle< decimal > dec_dec() {
-  return log( "decimal", all( bco_d, decimal_tok ) );
-}
 
+//----------Decimal builders--------------
+template<>
+builder_t< decimal, string >
+  builder< decimal, string >;
+
+//----------Decimal parser----------------
 template<>
 const handle< decimal > parser< decimal > =
-  dec_dec();
+            caller< decimal >( "decimal",
+                               decimal_tok );
 //-------------------------------------------------
 
-const build_constant< boolean > bco_b;
-
 //-------------------------------------------------
-//--------------------Boolean parser---------------
+//--------------------Boolean syntax---------------
 //<boolean> ::= {true,false}
-const handle< boolean > boo_boo() {
-  return log( "boolean", all( bco_b, boolean_tok ) );
-}
 
+//----------Boolean builders--------------
+template<>
+builder_t< boolean, string >
+  builder< boolean, string >;
+
+//----------Boolean parser----------------
 template<>
 const handle< boolean > parser< boolean > =
-  boo_boo();
+            caller< boolean >( "boolean",
+                               boolean_tok );
 //-------------------------------------------------
 
-const build_variable< idn > bva_n;
-
 //-------------------------------------------------
-//--------------------Idn parser-------------------
+//--------------------Idn syntax-------------------
 //<idn> ::= {a..z,A..Z}{a..z,A..Z,0..9,_}*
-const handle< idn > idn_idn() {
-  cout << "idn" << endl;
-  return log( "<idn>", all( bva_n, idn_tok ) );
-}
 
+//----------Idn builders------------------
+template<>
+builder_t< idn, string >
+  builder< idn, string >;
+
+//----------Idn parser--------------------
 template<>
 const handle< idn > parser< idn > =
-  idn_idn();
+            caller< idn >( "idn",
+                           idn_tok );
 //-------------------------------------------------
 
-const build_variable< idp > bva_p;
-
 //-------------------------------------------------
-//--------------------Idp parser-------------------
+//--------------------Idp syntax-------------------
 //<idp> ::= <idp> {'}
-const handle< idp > idp_idp() {
-  return log( "<idp>", all( bva_p, idp_tok ) );
-}
 
+//----------Idp builders------------------
+template<>
+builder_t< idp, string >
+  builder< idp, string >;
+
+//----------Idp parser--------------------
 template<>
 const handle< idp > parser< idp > =
-  idp_idp();
+            caller< idp >( "idp",
+                           idp_tok );
 //-------------------------------------------------
 
-const build_itemise< id, idn > bit_in;
-const build_itemise< id, idp > bit_ip;
-
 //-------------------------------------------------
-//--------------------Id parser--------------------
-//<id> ::= <idn> |
-//         <idp>
-const handle< id > idn_id( handle< idn > hi ) {
-  return log( "<id-idn>", all( bit_in, hi ) );
-}
+//--------------------Id syntax--------------------
+//<id> ::= <idn>
+//       | <idp>
 
-const handle< id > idp_id( handle< idp > hi ) {
-  return log( "<id-idp>", all( bit_ip, hi ) );
-}
+//----------Id builders-------------------
+template<>
+builder_t< id, eref< idp > >
+  builder< id, eref< idp > >;
 
 template<>
+builder_t< id, eref< idn > >
+  builder< id, eref< idn > >;
+
+//----------Id parser---------------------
+template<>
 const handle< id > parser< id > =
-   attempt( idp_id( reference( "idp", parser< idp > ) ) )
-||          idn_id( reference( "idn", parser< idn > ) );
+   attempt( caller< id >( "id:idp",
+                          reference( "idp", parser< idp > ) ) )
+||          caller< id >( "id:idn",
+                          reference( "idn", parser< idn > ) );
 //-------------------------------------------------

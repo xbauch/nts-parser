@@ -3,478 +3,492 @@
 
 #pragma once
 
-build_itemise< arith_lit, id > bit_ali;
-build_empty< arith_lit > bue_alt;
-build_itemise< arith_lit, numeral > bit_aln;
-build_itemise< arith_lit, decimal > bit_ald;
-
 //-------------------------------------------------
 //--------------------Arith-lit parser-------------
-//<arith-lit> ::= <id> |
-//                tid |
-//                <numeral> |
-//                <decimal>
-const handle< arith_lit > id_ari_lit( handle< id > hi ) {
-  return log( "arith-lit-id", all( bit_ali, hi ) );
-}
+//<arith-lit> ::= <id>
+//              | tid
+//              | <numeral>
+//              | <decimal>
 
-const handle< arith_lit > tid_ari_lit() {
-  return log( "arith-lit-tid", all( bue_alt, tid_tok ) );
-}
+//----------Arith-lit builders------------
+template<>
+builder_t< arith_lit, eref< id > >
+  builder< arith_lit, eref< id > >;
+template<>
+builder_t< arith_lit, string >
+  builder< arith_lit, string >;
+template<>
+builder_t< arith_lit, eref< decimal > >
+  builder< arith_lit, eref< decimal > >;
+template<>
+builder_t< arith_lit, eref< numeral > >
+  builder< arith_lit, eref< numeral > >;
 
-const handle< arith_lit > num_ari_lit( handle< numeral > hn ) {
-  return log( "arith-lit-numeral", all( bit_aln, hn ) );
-}
-
-const handle< arith_lit > dec_ari_lit( handle< decimal > hd ) {
-  return log( "arith-lit-decimal", all( bit_ald, hd ) );
-}
-
+//----------Arith-lit parser--------------
 template<>
 const handle< arith_lit >  parser< arith_lit > =
-   attempt( id_ari_lit( reference( "id", parser< id > ) ) )
-|| attempt( tid_ari_lit() )
-|| attempt( dec_ari_lit( reference( "decimal", parser< decimal > ) ) )
-||          num_ari_lit( reference( "numeral", parser< numeral > ) );
+   attempt( caller< arith_lit >( "arith-lit:id",
+                                 reference( "id", parser< id > ) ) )
+|| attempt( caller< arith_lit >( "arith-lit:tid",
+                                 tid_tok ) )
+|| attempt( caller< arith_lit >( "arith-lit:dec",
+                                 reference( "decimal", parser< decimal > ) ) )
+||          caller< arith_lit >( "arith-lit:num",
+                                 reference( "numeral", parser< numeral > ) );
 //-------------------------------------------------
-
-build_op< aop, akind::plus > bop_ap;
-build_op< aop, akind::minus > bop_am;
-build_op< aop, akind::times > bop_at;
-build_op< aop, akind::div > bop_ad;
-build_op< aop, akind::srem > bop_as;
 
 //-------------------------------------------------
 //--------------------Aop parser-------------------
 //<aop> ::= {+,-,*,/,%}
-const handle< aop > plu_aop() {
-  return log( "aop-plus", all( bop_ap, plus_tok ) );
-}
 
-const handle< aop > min_aop() {
-  return log( "aop-minus", all( bop_am, minus_tok ) );
-}
+//----------Aop builders------------------
+template<>
+builder_t< aop, string >
+  builder< aop, string >;
 
-const handle< aop > tim_rop() {
-  return log( "aop-times", all( bop_at, times_tok ) );
-}
-
-const handle< aop > div_rop() {
-  return log( "aop-div", all( bop_ad, div_tok ) );
-}
-
-const handle< aop > rem_rop() {
-  return log( "aop-mod", all( bop_as, mod_tok ) );
-}
-
+//----------Aop parser--------------------
 template<>
 const handle< aop > parser< aop > =
-   attempt( plu_aop() )
-|| attempt( min_aop() )
-|| attempt( tim_rop() )
-|| attempt( div_rop() )
-||          rem_rop();
+   attempt( caller< aop >( "aop:plus",
+                           plus_tok ) )
+|| attempt( caller< aop >( "aop:minus",
+                           minus_tok ) )
+|| attempt( caller< aop >( "aop:times",
+                           times_tok ) )
+|| attempt( caller< aop >( "aop:div",
+                           div_tok ) )
+||          caller< aop >( "aop:mod",
+                           mod_tok );
 //------------------------------------------------
 
 //-------------------------------------------------
-//--------------------Index-term vector-parser-----
+//--------------------Index-term vector syntax-----
+// <v-index-term> ::= <index-term> ][ <v-index-term>
+//                  | <index-term>
 
-build_index_term_arr_aop_cat bit_aac;
-build_index_term_lit_aop_cat bit_lac;
-build_index_term_par_aop_cat bit_pac;
+//----------Index-term vector builders----
+template<>
+consbuilder_t< index_term, string, vref< index_term >, eref< idn >, string,
+               vref< index_term >, string, eref< aop >, vref< index_term > >
+  consbuilder< index_term, string, vref< index_term >, eref< idn >, string,
+               vref< index_term >, string, eref< aop >, vref< index_term > >;
+template<>
+consbuilder_t< index_term, string, vref< index_term >, eref< arith_lit >,
+               eref< aop >, vref< index_term > >
+  consbuilder< index_term, string, vref< index_term >, eref< arith_lit >,
+               eref< aop >, vref< index_term > >;
+template<>
+consbuilder_t< index_term, string, vref< index_term >, string, vref< index_term >,
+               string, eref< aop >, vref< index_term > >
+  consbuilder< index_term, string, vref< index_term >, string, vref< index_term >,
+               string, eref< aop >, vref< index_term > >;
+template<>
+consbuilder_t< index_term, string, vref< index_term >, eref< idn >, string,
+               vref< index_term >, string >
+  consbuilder< index_term, string, vref< index_term >, eref< idn >, string,
+               vref< index_term >, string >;
+template<>
+consbuilder_t< index_term, string, vref< index_term >, eref< arith_lit > >
+  consbuilder< index_term, string, vref< index_term >, eref< arith_lit > >;
+template<>
+consbuilder_t< index_term, string, vref< index_term >, string, vref< index_term >,
+               string >
+  consbuilder< index_term, string, vref< index_term >, string, vref< index_term >,
+               string>;
 
-build_index_term_arr_cat bit_arc;
-build_index_term_lit_cat bit_lrc;
-build_index_term_par_cat bit_prc;
+template<>
+lastbuilder_t< index_term, eref< idn >, string,
+               vref< index_term >, string, eref< aop >, vref< index_term > >
+  lastbuilder< index_term, eref< idn >, string,
+               vref< index_term >, string, eref< aop >, vref< index_term > >;
+template<>
+lastbuilder_t< index_term, eref< arith_lit >, eref< aop >, vref< index_term > >
+  lastbuilder< index_term, eref< arith_lit >, eref< aop >, vref< index_term > >;
+template<>
+lastbuilder_t< index_term, string, vref< index_term >, string, eref< aop >,
+               vref< index_term > >
+  lastbuilder< index_term, string, vref< index_term >, string, eref< aop >,
+               vref< index_term > >;
+template<>
+lastbuilder_t< index_term, eref< idn >, string, vref< index_term >, string >
+  lastbuilder< index_term, eref< idn >, string, vref< index_term >, string >;
+template<>
+lastbuilder_t< index_term, eref< arith_lit > >
+  lastbuilder< index_term, eref< arith_lit > >;
+template<>
+lastbuilder_t< index_term, string, vref< index_term >, string >
+  lastbuilder< index_term, string, vref< index_term >, string >;
 
-build_index_term_arr_aop bit_aro;
-build_index_term_lit_aop bit_lao;
-build_index_term_par_aop bit_pao;
-
-build_index_term_arr bit_tar;
-build_vectorise_con< index_term, arith_lit > bvc_ita;
-build_vectorise_vcon< index_term, index_term > bvc_itt;
-
-const vhandle< index_term > vec_ind_ter_arr_aop_cat( handle< idn > hi,
-                                                     vhandle< index_term > vt,
-                                                     handle< aop > ho ) {
-  return log( "vec-ind-ter-arr-aop-cat",
-              all( bit_aac, hi, square_left_tok, vt, square_right_tok, ho, vt,
-                   square_right_left_tok, vt ) );
-}
-
-const vhandle< index_term > vec_ind_ter_lit_aop_cat( handle< arith_lit > hl,
-                                                     handle< aop > ho,
-                                                     vhandle< index_term > vt ) {
-  return log( "vec-ind-ter-lit-aop-cat",
-              all( bit_lac, hl, ho, vt, square_right_left_tok, vt ) );
-}
-
-const vhandle< index_term > vec_ind_ter_par_aop_cat( vhandle< index_term > vt,
-                                                     handle< aop > ho ) {
-  return log( "vec-ind-ter-par-aop-cat",
-              all( bit_pac, vt, round_right_tok, ho, vt, square_right_left_tok, vt ) );
-}
-
-const vhandle< index_term > vec_ind_ter_arr_cat( handle< idn > hi,
-                                                 vhandle< index_term > vt ) {
-  return log( "vec-ind-ter-arr-cat",
-              all( bit_arc, hi, square_left_tok, vt, square_right_tok,
-                   square_right_left_tok, vt ) );
-}
-
-const vhandle< index_term > vec_ind_ter_lit_cat( handle< arith_lit > hl,
-                                                 vhandle< index_term > vt ) {
-  return log( "vec-ind-ter-lit-cat",
-              all( bit_lrc, hl, square_right_left_tok, vt ) );
-}
-
-const vhandle< index_term > vec_ind_ter_par_cat( vhandle< index_term > vt ) {
-  return log( "vec-ind-ter-par-cat",
-              all( bit_prc, vt, round_right_tok, square_right_left_tok, vt ) );
-}
-
-const vhandle< index_term > vec_ind_ter_arr_aop( handle< idn > hi,
-                                                 vhandle< index_term > vt,
-                                                 handle< aop > ho ) {
-  return log( "vec-ind-ter-arr-aop",
-              all( bit_aro, hi, square_left_tok, vt, square_right_tok, ho, vt ) );
-}
-
-const vhandle< index_term > vec_ind_ter_lit_aop( handle< arith_lit > hl,
-                                                 handle< aop > ho,
-                                                 vhandle< index_term > vt ) {
-  return log( "vec-ind-ter-lit-aop", all( bit_lao, hl, ho, vt ) );
-}
-
-const vhandle< index_term > vec_ind_ter_par_aop( vhandle< index_term > vt,
-                                                 handle< aop > ho ) {
-  return log( "vec-ind-ter-par-aop",
-              all( bit_pao, vt, round_right_tok, ho, vt ) );
-}
-
-const vhandle< index_term > vec_ind_ter_arr( handle< idn > hi,
-                                             vhandle< index_term > vt ) {
-  return log( "vec-ind-ter-arr",
-              all( bit_tar, hi, square_left_tok, vt ) );
-}
-
-
-const vhandle< index_term > vec_ind_ter_par( vhandle< index_term > vt ) {
-   return log( "vec-ind-ter-par", all( bvc_itt, vt ) );
-}
-
-const vhandle< index_term > vec_ind_ter_lit( handle< arith_lit > hl ) {
-  return log( "vec-ind-ter-lit", all( bvc_ita, hl ) );
-}
-
+//----------Index-term vector parser------
 template<>
 const vhandle< index_term > vparser_sq< index_term > =
-//<idn> [ <v-index-term> ] <aop> <v-index-term> ][ <v-index-term>
-   attempt( vec_ind_ter_arr_aop_cat( reference( "idn", parser< idn > ),
-                                     reference( "index-terms",
-                                                vparser_sq< index_term > ),
-                                     reference( "aop", parser< aop > ) ) )
-//<arith-lit>              <aop> <v-index-term> ][ <v-index-term>
-|| attempt( vec_ind_ter_lit_aop_cat( reference( "arith-lit", parser< arith_lit > ),
-                                     reference( "aop", parser< aop > ),
-                                     reference( "index-terms",
-                                                vparser_sq< index_term > ) ) )
-//( <v-index-term> )       <aop> <v-index-term> ][ <v-index-term>  
-|| attempt( discard( round_left_tok )
-         && vec_ind_ter_par_aop_cat( reference( "index_terms",
-                                                vparser_sq< index_term > ),
-                                     reference( "aop", parser< aop > ) ) )
-
-//<idn> [ <v-index-term> ]                      ][ <v-index-term>  
-|| attempt( vec_ind_ter_arr_cat( reference( "idn", parser< idn > ),
-                                 reference( "index-terms",
-                                            vparser_sq< index_term > ) ) )
-//( <v-index-term> )                            ][ <v-index-term>
-|| attempt( discard( round_left_tok )
-         && vec_ind_ter_par_cat( reference( "index_terms",
-                                            vparser_sq< index_term > ) ) )
-//<arith-lit>                                   ][ <v-index-term>
-|| attempt( vec_ind_ter_lit_cat( reference( "arith-lit", parser< arith_lit > ),
-                                 reference( "index-terms",
-                                            vparser_sq< index_term > ) ) )
-                                            
-//<idn> [ <v-index-term> ] <aop> <v-index-term>
-|| attempt( vec_ind_ter_arr_aop( reference( "idn", parser< idn > ),
-                                 reference( "index-terms", vparser_sq< index_term > ),
-                                 reference( "aop", parser< aop > ) ) )
-
-//<arith-lit>              <aop> <v-index-term>
-|| attempt( vec_ind_ter_lit_aop( reference( "arith-lit", parser< arith_lit > ),
-                                 reference( "aop", parser< aop > ),
-                                 reference( "index-terms",
-                                            vparser_sq< index_term > ) ) )
-//( <v-index-term> )       <aop> <v-index-term>
-|| attempt( discard( round_left_tok )
-         && vec_ind_ter_par_aop( reference( "index_terms", vparser_sq< index_term > ),
-                                 reference( "aop", parser< aop > ) ) )
-//<idn> [ <v-index-term> ]  
-|| attempt( vec_ind_ter_arr( reference( "idn", parser< idn > ),
-                             reference( "index-terms", vparser_sq< index_term > ) )
-         && discard( square_right_tok ) )
-//( <v-index-term> )
-|| attempt( discard( round_left_tok )
-         && vec_ind_ter_par( reference( "index_terms", vparser_sq< index_term > ) )
-         && discard( round_right_tok ) )
-//<arith-lit>
-||          vec_ind_ter_lit( reference( "arith-lit", parser< arith_lit > ) );
+   attempt( conscaller< index_term >(
+              "v-index-term:array-aop-cons",
+              square_right_left_tok,
+              reference( "index-terms", vparser_sq< index_term > ),
+              reference( "idn",         parser< idn > ),
+              square_left_tok,
+              reference( "index-terms", vparser_sq< index_term > ),
+              square_right_tok,
+              reference( "aop",         parser< aop > ),
+              reference( "index-terms", vparser_sq< index_term > ) ) )
+|| attempt( conscaller< index_term >(
+              "v-index-term:lit-aop-cons",
+              square_right_left_tok,
+              reference( "index-terms", vparser_sq< index_term > ),
+              reference( "arith-lit",   parser< arith_lit > ),
+              reference( "aop",         parser< aop > ),
+              reference( "index-terms", vparser_sq< index_term > ) ) )
+|| attempt( conscaller< index_term >(
+              "v-index-term:par-aop-cons",
+              square_right_left_tok,
+              reference( "index-terms", vparser_sq< index_term > ),
+              round_left_tok,
+              reference( "index-terms", vparser_sq< index_term > ),
+              round_right_tok,
+              reference( "aop",         parser< aop > ),
+              reference( "index-terms", vparser_sq< index_term > ) ) )
+|| attempt( conscaller< index_term >(
+              "v-index-term:array-cons",
+              square_right_left_tok,
+              reference( "index-terms", vparser_sq< index_term > ),
+              reference( "idn",         parser< idn > ),
+              square_left_tok,
+              reference( "index-terms", vparser_sq< index_term > ),
+              square_right_tok ) )
+|| attempt( conscaller< index_term >(
+              "v-index-term:par-cons",
+              square_right_left_tok,
+              reference( "index-terms", vparser_sq< index_term > ),
+              round_left_tok,
+              reference( "index-terms", vparser_sq< index_term > ),
+              round_right_tok ) )
+|| attempt( conscaller< index_term >(
+              "v-index-term:lit-cons",
+              square_right_left_tok,
+              reference( "index-terms", vparser_sq< index_term > ),
+              reference( "arith-lit",   parser< arith_lit > ) ) )
+            
+|| attempt( lastcaller< index_term >(
+              "v-index-term:array-aop",
+              reference( "idn",         parser< idn > ),
+              square_left_tok,
+              reference( "index-terms", vparser_sq< index_term > ),
+              square_right_tok,
+              reference( "aop",         parser< aop > ),
+              reference( "index-terms", vparser_sq< index_term > ) ) )
+|| attempt( lastcaller< index_term >(
+              "v-index-term:lit-aop",
+              reference( "arith-lit",   parser< arith_lit > ),
+              reference( "aop",         parser< aop > ),
+              reference( "index-terms", vparser_sq< index_term > ) ) )
+|| attempt( lastcaller< index_term >(
+              "v-index-term:par-aop",
+              round_left_tok,
+              reference( "index-terms", vparser_sq< index_term > ),
+              round_right_tok,
+              reference( "aop",         parser< aop > ),
+              reference( "index-terms", vparser_sq< index_term > ) ) )
+|| attempt( lastcaller< index_term >(
+              "v-index-term:array",
+              reference( "idn",         parser< idn > ),
+              square_left_tok,
+              reference( "index-terms", vparser_sq< index_term > ),
+              square_right_tok ) )
+|| attempt( lastcaller< index_term >(
+              "v-index-term:par",
+              round_left_tok,
+              reference( "index-terms", vparser_sq< index_term > ),
+              round_right_tok ) )
+||          lastcaller< index_term >(
+              "v-index-term:lit",
+              reference( "arith-lit", parser< arith_lit > ) );
 //-------------------------------------------------
 
 //-------------------------------------------------
-//--------------------Index-term vector-parser-----
-build_itemise_vvector< index_term, index_term > biv_iti;
+//--------------------Index-term syntax------------
+// <index-term> ::= <arith-lit>
+//                | <idn> [ <index-term> ]
+//                | <index-term> <aop> <index-term>
+//                | ( <index-term> )
+//                | <index-term> [ <index-term> ]
 
-const handle< index_term > ind_ter_vec( vhandle< index_term > vt ) {
-  return log( "", all( biv_iti, vt ) );
-}
+//----------Index-term builders-----------
+template<>
+builder_t< index_term, vref< index_term > >
+  builder< index_term, vref< index_term > >;
 
+//----------Index-term parser-------------
 template<>
 const handle< index_term > parser< index_term > =
-  ind_ter_vec( reference( "index-terms", vparser_sq< index_term > ) );
-build_eref_s_vref< array_read, idn, index_term > bes_aia;
+  attempt( caller< index_term >( "index-term",
+                                 vparser_sq< index_term > ) );
 //-------------------------------------------------
 
 //-------------------------------------------------
-//--------------------Array-read parser------------
-//<array-read> ::= <idn> [ <arith-lit> ] |
-//                 <array-read> [ <arith-lit> ]
-const handle< array_read > arr_read( handle< idn > hi, vhandle< index_term > vl ) {
-  return log( "array-read-vec",
-              all( bes_aia, hi, square_left_tok, vl ) );
-}
+//--------------------Array-read syntax------------
+//<array-read> ::= <idn> [ <index-term> ]
+//               | <array-read> [ <index-term> ]
 
+//----------Array-read builders-----------
+template<>
+builder_t< array_read, eref< idn >, string, vref< index_term >, string >
+  builder< array_read, eref< idn >, string, vref< index_term >, string >;
+
+//----------Array-read parser-------------
 template<>
 const handle< array_read > parser< array_read > =
-   arr_read( reference( "idn", parser< idn > ),
-             reference( "arith-lits", vparser_sq< index_term > ) )
-&& discard( square_right_tok );
+            caller< array_read >( "array-read",
+                                  reference( "idn", parser< idn > ),
+                                  square_left_tok,
+                                  reference( "index-terms", vparser_sq< index_term > ),
+                                  square_right_tok );
 //-------------------------------------------------
-
-build_itemise< array_term, array_read > bit_ata;
-build_itemise< array_term, idn > bit_ati;
 
 //-------------------------------------------------
 //--------------------Array-term parser------------
-//<array-term> ::= <array-read> |
-//                 |<idn>|
-const handle< array_term > read_arr( handle< array_read > ha ) {
-  return log( "array-term-array-read", all( bit_ata, ha ) );
-}
+//<array-term> ::= <array-read>
+//               | |<idn>|
 
-const handle< array_term > size_arr( handle< idn > hi ) {
-  return log( "array-term-size", all( bit_ati, hi ) );
-}
+//----------Array-term builders-----------
+template<>
+builder_t< array_term, eref< array_read > >
+  builder< array_term, eref< array_read > >;
 
+template<>
+builder_t< array_term, string, eref< idn >, string >
+  builder< array_term, string, eref< idn >, string >;
+
+//----------Array-term parser-------------
 template<>
 const handle< array_term > parser< array_term > =
-   attempt( read_arr( reference( "array-read", parser< array_read > ) ) )
-||          ( discard( bar_tok )
-           && size_arr( reference( "idn", parser< idn > ) ) 
-           && discard( bar_tok ) );
+   attempt( caller< array_term >( "array-term:read",
+                                  reference( "array-read", parser< array_read > ) ) )
+||          caller< array_term >( "array-term:size",
+                                  bar_tok,
+                                  reference( "idn", parser< idn > ),
+                                  bar_tok );
 //-------------------------------------------------
 
-build_op< sign, skind::sign_true > bop_st;
-build_op< sign, skind::sign_false > bop_sf;
-
 //-------------------------------------------------
-//--------------------Sign parser------------------
+//--------------------Sign syntax------------------
 //<sign> ::= {-} | epsilon
-handle< sign > const tru_sig() {
-  return log( "sign-true", all( bop_st, minus_tok ) );
-}
 
-handle< sign > const fal_sig() {
-  return log( "sign-false", all( bop_sf, empty_tok ) );
-}
+//----------Sign builders-----------------
+template<>
+builder_t< sign, string >
+  builder< sign, string >;
 
+//----------Sign parser-------------------
 template<>
 const handle< sign > parser< sign > =
-   attempt( tru_sig() )
-||          fal_sig();
+   attempt( caller< sign >( "sign:true",
+                            minus_tok ) )
+||          caller< sign >( "sign:false",
+                            empty_tok );
 //-------------------------------------------------
 
-build_binop_as_par< arith_term, sign, aop, arith_lit, arith_term > bbi_asl;
-build_binop_as_par< arith_term, sign, aop, array_term, arith_term > bbi_asa;
-build_binop_par< arith_term, aop, arith_term > bbi_apt;
-build_itemise< arith_term, arith_term > bit_ara;
-build_itemise_two< arith_term, sign, array_term > bit_asa;
-build_itemise_two< arith_term, sign, arith_lit > bit_asl;
-
 //-------------------------------------------------
-//--------------------Arith-term parser------------
-//<arith-term> ::= <sign> <arith-lit> |
-//                 <sign> <array-term> |
-//                 ( <arith-term> ) |
-//                 <arith-term> <aop> <arith-term>
-const handle< arith_term > par_aop_ari_ter( handle< arith_term > hat,
-                                             handle< aop > hap ) {
-  return log( "arit-term-par-aop", all( bbi_apt, hat, round_right_tok, hap, hat ) );
-}
+//--------------------Arith-term syntax------------
+//<arith-term> ::= <sign> <arith-lit>
+//               | <sign> <array-term>
+//               | ( <arith-term> )
+//               | <arith-term> <aop> <arith-term>
 
-const handle< arith_term > par_ari_ter( handle< arith_term > hat ) {
-  return log( "arit-term-par", all( bit_ara, hat ) );
-}
+//----------Arith-term buiders------------
+template<>
+builder_t< arith_term, string, eref< arith_term >, string, eref< aop >,
+           eref< arith_term > >
+  builder< arith_term, string, eref< arith_term >, string, eref< aop >,
+           eref< arith_term > >;
+template<>
+builder_t< arith_term, string, eref< arith_term >, string >
+  builder< arith_term, string, eref< arith_term >, string >;
+template<>
+builder_t< arith_term, eref< sign >, eref< arith_lit >, eref< aop >,
+           eref< arith_term > >
+  builder< arith_term, eref< sign >, eref< arith_lit >, eref< aop >,
+           eref< arith_term > >;
+template<>
+builder_t< arith_term, eref< sign >, eref< array_term >, eref< aop >,
+           eref< arith_term > >
+  builder< arith_term, eref< sign >, eref< array_term >, eref< aop >,
+           eref< arith_term > >;
+template<>
+builder_t< arith_term, eref< sign >, eref< arith_lit > >
+  builder< arith_term, eref< sign >, eref< arith_lit > >;
+template<>
+builder_t< arith_term, eref< sign >, eref< array_term > >
+  builder< arith_term, eref< sign >, eref< array_term > >;
 
-const handle< arith_term > lit_aop_ari_term( handle< sign > has,
-                                             handle< arith_lit > hal,
-                                             handle< aop > hap,
-                                             handle< arith_term > hat ) {
-  return log( "arit-term-lit-aop", all( bbi_asl, has, hal, hap, hat ) );
-}
 
-const handle< arith_term > arr_aop_ari_term( handle< sign > has,
-                                             handle< array_term > haa,
-                                             handle< aop > hap,
-                                             handle< arith_term > hat ) {
-  return log( "arit-term-arr-aop", all( bbi_asa, has, haa, hap, hat ) );
-}
-
-const handle< arith_term > arr_ari_term( handle< sign > has,
-                                         handle< array_term > haa ) {
-  return log( "arit-term-arr", all( bit_asa, has, haa ) );
-}
-
-const handle< arith_term > lit_ari_term( handle< sign > has,
-                                         handle< arith_lit > hal ) {
-  return log( "arit-term-arr", all( bit_asl, has, hal ) );
-}
-
+//----------Arith-term parser--------------
 template<>
 const handle< arith_term > parser< arith_term > =
-   attempt( discard( round_left_tok )
-         && par_aop_ari_ter( reference( "arith-term", parser< arith_term > ),
-                             reference( "aop", parser< aop > ) ) )
-|| attempt( discard( round_left_tok )
-         && par_ari_ter( reference( "arith-term", parser< arith_term > ) )
-         && discard( round_right_tok ) )
-|| attempt( lit_aop_ari_term( reference( "sign", parser< sign > ),
-                              reference( "arith-lit", parser< arith_lit > ),
-                              reference( "aop", parser< aop > ),
-                              reference( "arith-term", parser< arith_term > ) ) )
-|| attempt( arr_aop_ari_term( reference( "sign", parser< sign > ),
-                              reference( "array-term", parser< array_term > ),
-                              reference( "aop", parser< aop > ),
-                              reference( "arith-term", parser< arith_term > ) ) )
-|| attempt( arr_ari_term( reference( "sign", parser< sign > ),
-                          reference( "array-term", parser< array_term > ) ) )
-||          lit_ari_term( reference( "sign", parser< sign > ),
-                          reference( "arith-lit", parser< arith_lit > ) );
+   attempt( caller< arith_term >( "arith-term:par-aop",
+                                  round_left_tok,
+                                  reference( "arith-term", parser< arith_term > ),
+                                  round_right_tok,
+                                  reference( "aop",        parser< aop > ),
+                                  reference( "arith-term", parser< arith_term > ) ) )
+|| attempt( caller< arith_term >( "arith-term:par",
+                                  round_left_tok,
+                                  reference( "arith-term", parser< arith_term > ),
+                                  round_right_tok ) )
+|| attempt( caller< arith_term >( "arith-term:lit-aop",
+                                  reference( "sign", parser< sign > ),
+                                  reference( "arith-lit", parser< arith_lit > ),
+                                  reference( "aop", parser< aop > ),
+                                  reference( "arith-term", parser< arith_term > ) ) )
+|| attempt( caller< arith_term >( "arith-term:arr-aop",
+                                  reference( "sign", parser< sign > ),
+                                  reference( "array-term", parser< array_term > ),
+                                  reference( "aop", parser< aop > ),
+                                  reference( "arith-term", parser< arith_term > ) ) )
+|| attempt( caller< arith_term >( "arith-term:arr",
+                                  reference( "sign", parser< sign > ),
+                                  reference( "array-term", parser< array_term > ) ) )
+||          caller< arith_term >( "arith-term:lit",
+                                  reference( "sign", parser< sign > ),
+                                  reference( "arith-lit", parser< arith_lit > ) );
 //-------------------------------------------------
 
-build_cat< arith_term > buc_art;
-build_vectorise< arith_term > buv_art;
+//-------------------------------------------------
+//--------------------Arith-term vector syntax-----
+//<v-arith-term> ::= <arith-term> , <v-arith-term>
+//                 | <arith-term>
 
-const vhandle< arith_term > cat_arit_term_cm( handle< arith_term > ha,
-                                              vhandle< arith_term > va ) {
-  return log( "cat", all( buc_art, ha, comma_tok, va ) );
-}
-
-const vhandle< arith_term > vec_arit_term( handle< arith_term > ha ) {
-  return log( "con", all( buv_art, ha ) );
-}
-
+//----------Arith-term vector parser------
 template<>
 const vhandle< arith_term > vparser_cm< arith_term > =
-   attempt( cat_arit_term_cm( reference( "arith-term", parser< arith_term > ),
-                              reference( "v-arith-term", vparser_cm< arith_term > ) ) )
-||          vec_arit_term( reference( "arith-term", parser< arith_term > ) );
-
-build_itemise_vector< arith_list, arith_term > bit_ala;
+   attempt( conscaller< arith_term >(
+              "arith-terms:cons",
+              comma_tok,
+              reference( "v-arith-term", vparser_cm< arith_term > ),
+              reference( "arith-term", parser< arith_term > ) ) )
+||          lastcaller< arith_term >(
+              "arith-term:last",
+              reference( "arith-term", parser< arith_term > ) );
+//-------------------------------------------------
 
 //-------------------------------------------------
-//--------------------Arith-list parser------------
-const handle< arith_list > non_arith_list( vhandle< arith_term > vt ) {
-  return log( "arith-list", all( bit_ala, vt ) );
-}
+//--------------------Arith-list syntax------------
+//<arith-list> ::= <arith-term>
+//               | <arith-list> , <arith-term>
 
+//----------Arith-list builders-----------
+template<>
+builder_t< arith_list, vref< arith_term > >
+  builder< arith_list, vref< arith_term > >;
+
+//----------Arith-list parser-------------
 template<>
 const handle< arith_list > parser< arith_list > =
-  non_arith_list( reference( "arith_terms", vparser_cm< arith_term > ) );
+  caller< arith_list >( "arith-list",
+                        reference( "arith_terms", vparser_cm< arith_term > ) );
 //-------------------------------------------------
 
-build_itemise_vector< arith_list_e, arith_term > bit_ale;
-build_empty< arith_list_e > bue_ale;
-
 //-------------------------------------------------
-//--------------------Arith-list-e parser----------
-//<arith-list> ::= <arith-term> |
-//                 <arith-list> , <arith-term>
-const handle< arith_list_e > non_arith_list_e( vhandle< arith_term > vt ) {
-  return log( "arith-list-e-nonempty",
-              all( bit_ale, vt ) );
-}
+//--------------------Arith-list-e syntax----------
+//<arith-list-e> ::= <arith-list>
+//                 | epsilon
 
-const handle< arith_list_e > emp_arith_list_e() {
-  return log( "arith-list-e-empty", all( bue_ale, empty_tok ) );
-}
+//----------Arith-list-e builders---------
+template<>
+builder_t< arith_list_e, vref< arith_term > >
+  builder< arith_list_e, vref< arith_term > >;
 
+template<>
+builder_t< arith_list_e, string >
+  builder< arith_list_e, string >;
+
+//----------Arith-list-e parser-----------
 template<>
 const handle< arith_list_e > parser< arith_list_e > =
-   attempt( non_arith_list_e( reference( "arith_terms", vparser_cm< arith_term > ) ) )
-||          emp_arith_list_e();
+   attempt( caller< arith_list_e >(
+              "arith-list-e:non-empty",
+              reference( "arith_terms", vparser_cm< arith_term > ) ) )
+||          caller< arith_list_e >(
+              "arith-list-e:empty",
+              empty_tok );
 //-------------------------------------------------
 
-const vhandle< arith_term > cat_arit_term_sq( handle< arith_term > ha,
-                                              vhandle< arith_term > va ) {
-  return log( "cat", all( buc_art, ha, square_right_left_tok, va ) );
-}
+//-------------------------------------------------
+//--------------------Arith-term vector syntax-----
+// <v-arith-term> ::= <arith-term> ][ <v-arith-term>
+//                  | <arith-term>
+
+//----------Arith-term vector builders----
+template<>
+consbuilder_t< arith_term, string, vref< arith_term >, eref< arith_term > >
+  consbuilder< arith_term, string, vref< arith_term >, eref< arith_term > >;
 
 template<>
+lastbuilder_t< arith_term, eref< arith_term > >
+  lastbuilder< arith_term, eref< arith_term > >;
+
+//----------Arith-term vector parser------
+template<>
 const vhandle< arith_term > vparser_sq< arith_term > =
-   attempt( cat_arit_term_sq( reference( "arith-term", parser< arith_term > ),
-                              reference( "v-arith-term", vparser_sq< arith_term > ) ) )
-||          vec_arit_term( reference( "arith-term", parser< arith_term > ) );
-
-
-build_vref_s_vref< multi, arith_term > bvs_mat;
-build_itemise_vector< multi, arith_term > biv_mat;
-build_empty< multi > bue_mul;
+   attempt( conscaller< arith_term >(
+              "arith-terms:cons",
+              square_right_left_tok,
+              reference( "arith-terms", vparser_sq< arith_term > ),
+              reference( "arith-term", parser< arith_term > ) ) )
+||          lastcaller< arith_term >(
+              "arith-terms:last",
+              reference( "arith-term", parser< arith_term > ) );
+//-------------------------------------------------
 
 //-------------------------------------------------
-//--------------------Multi parser-----------------
+//--------------------Multi syntax-----------------
 //<multi> ::= [ <arith-term> ] <multi> |
 //            [ <arith-list> ] |
 //            epsilon
-const handle< multi > non_multi( vhandle< arith_term > v1,
-                                 vhandle< arith_term > v2 ) {
-  return log( "multi-nonempty", all( bvs_mat, v1, comma_tok, v2 ) );
-}
 
-const handle< multi > alm_non_multi( vhandle< arith_term > va ) {
-  return log( "multi-list-nonempty", all( biv_mat, va ) );
-}
+//----------Multi builders----------------
+template<>
+builder_t< multi, string, vref< arith_term >, string, vref< arith_term >, string >
+  builder< multi, string, vref< arith_term >, string, vref< arith_term >, string >;
 
-const handle< multi > emp_multi() {
-  return log( "multi-empty", all( bue_mul, empty_tok ) );
-}
+template<>
+builder_t< multi, string, vref< arith_term >, string >
+  builder< multi, string, vref< arith_term >, string >;
 
+template<>
+builder_t< multi, string >
+  builder< multi, string >;
+
+//----------Multi parser------------------
 template<>
 const handle< multi > parser< multi > =
-   attempt( discard( square_left_tok )
-         && non_multi( reference( "arith_terms", vparser_sq< arith_term > ),
-                       reference( "arith_terms", vparser_cm< arith_term > ) )
-         && discard( square_right_tok ) )
-|| attempt( discard( square_left_tok )
-         && alm_non_multi( reference( "arith-terms", vparser_cm< arith_term > ) )
-         && discard( square_right_tok ) )
-||          emp_multi();
+   attempt( caller< multi >( "multi:non-non-empty",
+                             square_left_tok,
+                             reference( "arith_terms", vparser_sq< arith_term > ),
+                             comma_tok,
+                             reference( "arith_terms", vparser_cm< arith_term > ),
+                             square_right_tok ) )
+|| attempt( caller< multi >( "multi:non-empty",
+                             square_left_tok,
+                             reference( "arith_terms", vparser_cm< arith_term > ),
+                             square_right_tok ) )
+||          caller< multi >( "multi:empty",
+                             empty_tok );
 //-------------------------------------------------
 
-build_itemise_two< array_write, idp, multi > bit_aim;
 //-------------------------------------------------
-//--------------------Array-write parser-----------
+//--------------------Array-write syntax-----------
 //<array-write> ::= <idp> <multi>
-const handle< array_write > arr_wrt( handle< idp > hi, handle< multi > hm ) {
-  return log( "array-write", all( bit_aim, hi, hm ) );
-}
 
+//----------Array-write builders----------
+template<>
+builder_t< array_write, eref< idp >, eref< multi > >
+  builder< array_write, eref< idp >, eref< multi > >;
+
+//----------Array-write parser------------
 template<>
 const handle< array_write > parser< array_write > =
-  arr_wrt( reference( "idp", parser< idp > ),
-           reference( "multi", parser< multi > ) );
+            caller< array_write >( "array-write",
+                                   reference( "idp", parser< idp > ),
+                                   reference( "multi", parser< multi > ) );
 //-------------------------------------------------

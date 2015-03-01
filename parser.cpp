@@ -27,6 +27,6 @@ int main( int argc, char** argv ) {
     return 1;
   }
 
-  cout << deitemise( parse< havoc >( argv[ 1 ] ) ).print() << "foo" << endl;
+  cout << deitemise( parse< formula >( argv[ 1 ] ) ).print() << "foo" << endl;
   return 0;
 }

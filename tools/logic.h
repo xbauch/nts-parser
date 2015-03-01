@@ -7,12 +7,21 @@
 using namespace std;
 
 //--------------------------------------------------
-//--------------------Tokens syntax-----------------
+//--------------------Type class--------------------
 //<type> ::= {int,real,bool}
 struct type : expression {
   enum kind { integer, real, boolean };
 
-  type( kind k ) : expression( { k } ) {}
+  type( string s ) : expression( { kinder( s ) } ) {}
+
+  kind kinder( string s ) {
+    switch ( s[ 0 ] ) {
+    case 'i' : return integer;
+    case 'r' : return real;
+    case 'b' : return boolean;
+    default : assert( false ); return integer;
+    }
+  }
 
   string print() {
     switch( flat[ 0 ] ) {
@@ -26,7 +35,13 @@ struct type : expression {
 
 template<>
 bimap< type > symbol_storage< type >;
+//--------------------------------------------------
 
+//--------------------------------------------------
+//--------------------Numeral, Decimal, Boolean class
+//<numeral> ::= {0} | {1..9}{0..9}*
+//<decimal> ::= <numeral> {.}{0..9}+
+//<boolean> ::= {true,false}
 template< typename T >
 struct constant : expression {  
   constant( unioned< T > i ) : expression( { i } ) {}
@@ -60,18 +75,27 @@ template<>
 bimap< numeral > symbol_storage< numeral >;
 template<>
 bimap< decimal > symbol_storage< decimal >;
+//--------------------------------------------------
 
-using primed = true_type;
-using unprimed = false_type;
-
+//--------------------------------------------------
+//--------------------Idn, Idp classes--------------
+//<idn> ::= {a..z,A..Z}{a..z,A..Z,0..9,_}*
+//<idp> ::= <idp> {'}
 template< typename T >
 struct variable : symbol {
   using is_referenceable = true_type;
 
   string name;
   size_t _hash;
-  
+
+  variable( eref< variable > v ) : name( deitemise( v ).name ) {
+    _init();
+  }
   variable( std::string n ) : name( n ) {
+    _init();
+  }
+
+  void _init() {
     std::hash< string > hfn;
     _hash = hfn( name );
   }
@@ -85,9 +109,12 @@ struct variable : symbol {
   }
 
   string print() {
-    return name;// + (T() ? "'" : "");
+    return name;
   }
 };
+
+using primed = true_type;
+using unprimed = false_type;
 
 using idn = variable< unprimed >;
 using idp = variable< primed >;
@@ -96,7 +123,12 @@ template<>
 bimap< idp > symbol_storage< idp >;
 template<>
 bimap< idn > symbol_storage< idn >;
+//--------------------------------------------------
 
+//--------------------------------------------------
+//--------------------Id class----------------------
+//<id> ::= <idn>
+//       | <idp>
 struct id : expression {
   enum kind { id_n, id_p };
 
@@ -116,12 +148,22 @@ bimap< id > symbol_storage< id >;
 //--------------------------------------------------
 
 //--------------------------------------------------
-//----------syntax of booleans----------------------
+//--------------------Bop class---------------------
 //<bop> ::= {and,or,imply,equiv,&&,||,->,<->}
 struct bop : expression {
   enum kind { band, bor, imply, equiv };
 
-  bop( kind k ) : expression( { k } ) {}
+  bop( string s ) : expression( { kinder( s ) } ) {}
+
+  kind kinder( string s ) {
+    switch( s[ 0 ] ) {
+    case 'a' : case '&' : return band;
+    case 'o' : case '|' : return bor;
+    case 'i' : case '-' : return imply;
+    case 'e' : case '<' : return equiv;
+    default : assert( false ); return band;
+    }
+  }
 
   std::string print() {
     switch( flat[ 0 ] ) {
@@ -136,17 +178,18 @@ struct bop : expression {
 
 template<>
 bimap< bop > symbol_storage< bop >;
+//--------------------------------------------------
 
-//<bool-lit> ::= <id> |
-//               true |
-//               false
+//--------------------------------------------------
+//--------------------Bool-lit class----------------
+//<bool-lit> ::= <id>
+//             | true
+//             | false
 struct bool_lit : expression {
   enum kind { bl_id, bl_true, bl_false };
 
   bool_lit( eref< id > i ) : expression( { bl_id, i } ) {}
-  bool_lit( kind k ) : expression( { k } ) {
-    assert( k != bl_id );
-  }
+  bool_lit( string s ) : expression( { (s[0] == 't' ? bl_true : bl_false) } ) {}
 
   std::string print() {
     switch( flat[ 0 ] ) {
@@ -160,21 +203,30 @@ struct bool_lit : expression {
 
 template<>
 bimap< bool_lit > symbol_storage< bool_lit >;
+//--------------------------------------------------
 
-//<bool-term> ::= <bool-lit> |
-//                ( <bool-term> ) |
-//                <not> <bool-term> |
-//                <bool-term> <bop> <bool-term>
+//--------------------------------------------------
+//--------------------Bool-term class---------------
+//<bool-term> ::= <bool-lit>
+//              | ( <bool-term> )
+//              | <not> <bool-term>
+//              | <bool-term> <bop> <bool-term>
 struct bool_term : expression {
   enum kind { literal, parenthesised, negated, relation };
 
   bool_term( eref< bool_lit > l ) : expression( { literal, l } ) {}
-  bool_term( eref< bool_term > t, bool n = false ) :
-    expression( { (n ? negated : parenthesised), t } ) {}
+  bool_term( string, eref< bool_term > t, string ) :
+    expression( { parenthesised, t } ) {}
+  bool_term( string, eref< bool_term > t ) :
+    expression( { negated, t } ) {}
+  
   bool_term( eref< bool_lit > l, eref< bop > o, eref< bool_term > r ) :
     expression( { relation, itemise< bool_term >( bool_term( l ) ), o, r } ) {}
-  bool_term( eref< bool_term > l, eref< bop > o, eref< bool_term > r ) :
-    expression( { relation, itemise< bool_term >( bool_term( l ) ), o, r } ) {}
+  bool_term( string lp, eref< bool_term > l, string rp, eref< bop > o,
+             eref< bool_term > r ) :
+    expression( { relation, itemise< bool_term >( bool_term( lp, l, rp ) ), o, r } ) {}
+  bool_term( string n, eref< bool_term > l, eref< bop > o, eref< bool_term > r ) :
+    expression( { relation, itemise< bool_term >( bool_term( n, l ) ), o, r } ) {}
 
   string print() {
     switch( flat[ 0 ] ) {
@@ -194,16 +246,16 @@ bimap< bool_term > symbol_storage< bool_term >;
 //--------------------------------------------------
 
 //--------------------------------------------------
-//----------Arithmetic syntax-----------------------
-//<arith-lit> ::= <id> |
-//                tid |
-//                <numeral> |
-//                <decimal>
+//--------------------Arith-lit class---------------
+//<arith-lit> ::= <id>
+//              | tid
+//              | <numeral>
+//              | <decimal>
 struct arith_lit : expression {
   enum kind { arith_id, arith_tid, arith_num, arith_dec };
 
-  arith_lit( eref< id > i ) : expression( { arith_id, i } ) {}
-  arith_lit() : expression( { arith_tid } ) {}
+  arith_lit( eref< id > i ) :      expression( { arith_id, i } ) {}
+  arith_lit( string ) :            expression( { arith_tid } ) {}
   arith_lit( eref< numeral > n ) : expression( { arith_num, n } ) {}
   arith_lit( eref< decimal > d ) : expression( { arith_dec, d } ) {}
 
@@ -220,12 +272,27 @@ struct arith_lit : expression {
 
 template<>
 bimap< arith_lit > symbol_storage< arith_lit >;
+//-------------------------------------------------
 
+//-------------------------------------------------
+//--------------------Aop class--------------------
+//<aop> ::= {+,-,*,/,%}
 struct aop : expression {
   enum kind { plus, minus, times, div, srem, urem };
 
-  aop( kind k ) : expression( { k } ) {}
+  aop( string s ) : expression( { kinder( s ) } ) {}
 
+  kind kinder( string s ) {
+    switch( s[ 0 ] ) {
+    case '+' : return plus;
+    case '-' : return minus;
+    case '*' : return times;
+    case '/' : return div;
+    case '%' : return srem;
+    default : assert( false ); return plus;
+    }
+  }
+  
   std::string print() {
     switch( flat[ 0 ] ) {
     case plus : return "+";
@@ -241,6 +308,8 @@ struct aop : expression {
 template<>
 bimap< aop > symbol_storage< aop >;
 
+//--------------------------------------------------
+//--------------------Index-term class--------------
 // <index-term> ::= <arith-lit>
 //                | <idn> [ <index-term> ]
 //                | <index-term> <aop> <index-term>
@@ -249,21 +318,24 @@ bimap< aop > symbol_storage< aop >;
 struct index_term : expression {
   enum kind { literal, array, function, parenthesised };
 
-  index_term( eref< idn > i, vref< index_term > t, eref< aop > a,
-              eref< index_term > s ) :
-    expression( { function, itemise< index_term >( index_term( i, t ) ), a, s } ) {}
-  index_term( eref< arith_lit > l, eref< aop > a, eref< index_term > t ) :
-    expression( { function, itemise< index_term >( index_term( l ) ), a, t } ) {}
-  // index_term( eref< index_term > t, eref< aop > a, eref< index_term > i ) :
-  //   expression( { function, itemise< index_term >( index_term( t ) ), a, i } ) {}
-  
-  index_term( eref< idn > i, vref< index_term > t ) :
-    expression( cat( { array, i }, vconvert< size_t >( t ) ) ) {}
-  index_term( eref< arith_lit > l ) : expression( { literal, l } ) {}
-  index_term( eref< index_term > t ) : expression( { parenthesised, t } ) {}
+  index_term( eref< idn > i, string lp, vref< index_term > t1, string rp,
+              eref< aop > o, vref< index_term > t2 ) : expression(
+  { function, itemise( index_term( i, lp, t1, rp ) ), o, t2[ 0 ] } ) {}
+  index_term( eref< arith_lit > i,
+              eref< aop > o, vref< index_term > t2 ) : expression(
+  { function, itemise( index_term( i             ) ), o, t2[ 0 ] } ) {}
+  index_term( string lp, vref< index_term > t1, string rp,
+              eref< aop > o, vref< index_term > t2 ) : expression(
+  { function, itemise( index_term( lp, t1, rp    ) ), o, t2[ 0 ] } ) {}
 
-  index_term( eref< index_term > l, eref< aop > a, eref< index_term > r ) :
-    expression( { function, l, a, r } ) {}
+  index_term( eref< idn > i, string, vref< index_term > t1, string ) : expression(
+  { array, i,      t1[ 0 ] } ) {}
+  index_term( string, vref< index_term > t1, string ) : expression(
+  { parenthesised, t1[ 0 ] } ) {}
+  index_term( eref< arith_lit > i ) : expression(
+  { literal,             i } ) {}
+
+  index_term( vref< index_term > v ) : expression( deitemise( v[ 0 ] ).flat ) {}
 
   string print() {
     switch ( flat[ 0 ] ) {
@@ -288,11 +360,14 @@ struct index_term : expression {
 
 template<>
 bimap< index_term > symbol_storage< index_term >;
+//--------------------------------------------------
 
-// <array-read> ::= <idn> [ <index-term> ]
-//                | <array-read> [ <index-term> ]
+//--------------------------------------------------
+//--------------------Array-read class--------------
+//<array-read> ::= <idn> [ <index-term> ]
+//               | <array-read> [ <index-term> ]
 struct array_read : expression {
-  array_read( eref< idn > i, vref< index_term > v ) :
+  array_read( eref< idn > i, string, vref< index_term > v, string ) :
     expression( cat( { i }, vconvert< size_t >( v ) ) ) {
     assert( !v.empty() );
   }
@@ -308,14 +383,17 @@ struct array_read : expression {
 
 template<>
 bimap< array_read > symbol_storage< array_read >;
+//--------------------------------------------------
 
-//<array-term> ::= <array-read> |
-//                 |<idn>|
+//--------------------------------------------------
+//--------------------Array-term class--------------
+//<array-term> ::= <array-read>
+//               | |<idn>|
 struct array_term : expression {
   enum kind { array, size };
 
   array_term( eref< array_read > a ) : expression( { array, a } ) {}
-  array_term( eref< idn > i ) : expression( { size, i } ) {}
+  array_term( string, eref< idn > i, string ) : expression( { size, i } ) {}
 
   std::string print() {
     if ( flat[ 0 ] == array )
@@ -327,13 +405,15 @@ struct array_term : expression {
 
 template<>
 bimap< array_term > symbol_storage< array_term >;
+//--------------------------------------------------
 
-
+//--------------------------------------------------
+//--------------------Sign class--------------------
 //<sign> ::= {-} | \epsilon
 struct sign : expression {
   enum kind { sign_true, sign_false };
 
-  sign( kind k ) : expression( { k } ) {}
+  sign( string s ) : expression( { (s.empty() ? sign_false : sign_true) } ) {}
 
   std::string print() {
     return (flat[ 0 ] == sign_true) ? "-" : "";
@@ -342,27 +422,34 @@ struct sign : expression {
 
 template<>
 bimap< sign > symbol_storage< sign >;
+//--------------------------------------------------
 
-//<arith-term> ::= <sign> <arith-lit> |
-//                 <sign> <array-term> |
-//                 ( <arith-term> ) |
-//                 <arith-term> <aop> <arith-term>
+//--------------------------------------------------
+//--------------------Arith-term class--------------
+//<arith-term> ::= <sign> <arith-lit>
+//               | <sign> <array-term>
+//               | ( <arith-term> )
+//               | <arith-term> <aop> <arith-term>
 struct arith_term : expression {
   enum kind { literal, array, parenthesised, function };
 
-  arith_term( eref< sign > s, eref< arith_lit > l ) :
-    expression( { literal, s, l } ) {}
-  arith_term( eref< sign > s, eref< array_term > a ) :
-    expression( { array, s, a } ) {}
-  arith_term( eref< arith_term > t ) : expression( { parenthesised, t } ) {}
+  arith_term( eref< sign > s, eref< arith_lit > l ) : expression(
+  { literal,       s, l } ) {}
+  arith_term( eref< sign > s, eref< array_term > a ) : expression(
+  { array,         s, a } ) {}
+  arith_term( string, eref< arith_term > t, string ) : expression(
+  { parenthesised, t } ) {}
   arith_term( eref< sign > s, eref< arith_lit > l, eref< aop > o,
-              eref< arith_term > r ) :
-    expression( { function, itemise< arith_term >( arith_term( s, l ) ), o, r } ) {}
+              eref< arith_term > r ) : expression(
+  { function,      itemise( arith_term( s, l ) ), o, r } ) {}
   arith_term( eref< sign > s, eref< array_term > a, eref< aop > o,
-              eref< arith_term > r ) :
-    expression( { function, itemise< arith_term >( arith_term( s, a ) ), o, r } ) {}
-  arith_term( eref< arith_term > l, eref< aop > o, eref< arith_term > r ) :
-    expression( { function, itemise< arith_term >( arith_term( l ) ), o, r } ) {}
+              eref< arith_term > r ) : expression(
+  { function,      itemise( arith_term( s, a ) ), o, r } ) {}
+  arith_term( string lp, eref< arith_term > l, string rp, eref< aop > o,
+              eref< arith_term > r ) : expression(
+  { function,      itemise( arith_term( lp, l, rp ) ), o, r } ) {}
+
+  arith_term( eref< arith_term > t ) : expression( deitemise( t ).flat ) {}
 
   std::string print() {
     switch( flat[ 0 ] ) {
@@ -379,9 +466,12 @@ struct arith_term : expression {
 
 template<>
 bimap< arith_term > symbol_storage< arith_term >;
+//--------------------------------------------------
 
-//<arith-list> ::= <arith-term> |
-//                 <arith-list> , <arith-term>
+//--------------------------------------------------
+//--------------------Arith-list class--------------
+//<arith-list> ::= <arith-term>
+//               | <arith-list> , <arith-term>
 struct arith_list : expression {
   arith_list( vref< arith_term > l ) :
     expression( vconvert< size_t >( l ) ) {}
@@ -395,9 +485,14 @@ struct arith_list : expression {
 
 template<>
 bimap< arith_list > symbol_storage< arith_list >;
+//--------------------------------------------------
 
+//--------------------------------------------------
+//--------------------Arith-list-e class------------
+//<arith-list-e> ::= <arith-list>
+//                 | epsilon
 struct arith_list_e : expression {
-  arith_list_e() : expression( vsize_t() ) {}
+  arith_list_e( string ) : expression( vsize_t() ) {}
   arith_list_e( vref< arith_term > l ) :
     expression( vconvert< size_t >( l ) ) {}
 
@@ -412,21 +507,20 @@ struct arith_list_e : expression {
 
 template<>
 bimap< arith_list_e > symbol_storage< arith_list_e >;
+//--------------------------------------------------
 
+//--------------------------------------------------
+//--------------------Multi class-------------------
 //<multi> ::= [ <arith-term> ] <multi> |
 //            [ <arith-list> ] |
 //            \epsilon
 struct multi : expression {
-  multi() : expression( vsize_t() ) {}
-  multi( vref< arith_term > a, vref< arith_term > l ) :
+  multi( string ) : expression( vsize_t() ) {}
+  multi( string, vref< arith_term > a, string, vref< arith_term > l, string ) :
     expression( cat( { a.size() - 1 }, vconvert< size_t >( a ),
-                     vconvert< size_t >( l ) ) ) {
-    assert( !l.empty() );
-  }
-  multi( vref< arith_term > l ) : expression( cat( { size_t( 0 ) },
-                                                   vconvert< size_t >( l ) ) ) {
-    assert( !l.empty() );
-  }
+                     vconvert< size_t >( l ) ) ) { assert( !l.empty() ); }
+  multi( string, vref< arith_term > l, string ) : expression(
+    cat( { size_t( 0 ) }, vconvert< size_t >( l ) ) ) { assert( !l.empty() ); }
 
   std::string print() {
     if ( flat.empty() )
@@ -446,7 +540,10 @@ struct multi : expression {
 
 template<>
 bimap< multi > symbol_storage< multi >;
+//--------------------------------------------------
 
+//--------------------------------------------------
+//--------------------Array-write class-------------
 //<array-write> ::= <idp> <multi>
 struct array_write : expression {
   array_write( eref< idp > i, eref< multi > m ) : expression( { i, m } ) {}
@@ -461,13 +558,23 @@ bimap< array_write > symbol_storage< array_write >;
 //--------------------------------------------------
 
 //--------------------------------------------------
-//----------Atom syntax-----------------------------
+//--------------------Rop class---------------------
 //<rop> ::= {=,!=,<=,<,>=,>}
 struct rop : expression {
   enum kind { rop_equ, rop_neq, rop_leq, rop_ltn, rop_geq, rop_gtn };
 
-  rop( kind k ) : expression( { k } ) {}
+  rop( string s ) : expression( { kinder( s ) } ) {}
 
+  kind kinder( string s ) {
+    switch( s[ 0 ] ) {
+    case '=' : return rop_equ;
+    case '!' : return rop_neq;
+    case '<' : return (s.size() > 1 ? rop_leq : rop_ltn);
+    case '>' : return (s.size() > 1 ? rop_geq : rop_gtn);
+    default : assert( false ); return rop_equ;
+    }
+  }
+  
   std::string print() {
     switch( flat[ 0 ] ) {
     case rop_equ : return " = ";
@@ -483,9 +590,12 @@ struct rop : expression {
 
 template<>
 bimap< rop > symbol_storage< rop >;
+//--------------------------------------------------
 
-//<idn-list> ::= <idn> |
-//               <idn-list> , <idn>
+//--------------------------------------------------
+//--------------------Idn-list class----------------
+//<idn-list> ::= <idn>
+//             |  <idn-list> , <idn>
 struct idn_list : expression {
   idn_list( vref< idn > l ) :
     expression( vconvert< size_t >( l ) ) {
@@ -501,13 +611,16 @@ struct idn_list : expression {
 
 template<>
 bimap< idn_list > symbol_storage< idn_list >;
+//--------------------------------------------------
 
-//<idn-list-e> ::= <idn-list> |
-//                 \epsilon
+//--------------------------------------------------
+//--------------------Idn-list-e class--------------
+//<idn-list-e> ::= <idn-list>
+//               | epsilon
 struct idn_list_e : expression {
-  idn_list_e() : expression( vsize_t() ) {}
+  idn_list_e( string ) : expression( vsize_t() ) {}
   idn_list_e( vref< idn > l ) :
-    expression( vconvert< size_t >( l ) ) {}
+    expression( vconvert_reverse< size_t >( l ) ) {}
 
   std::string print() {
     if ( flat.empty() )
@@ -520,12 +633,15 @@ struct idn_list_e : expression {
 
 template<>
 bimap< idn_list_e > symbol_storage< idn_list_e >;
+//--------------------------------------------------
 
+//--------------------------------------------------
+//--------------------Havoc class-------------------
 //<havoc> ::= havoc ( <idn-list-e> )
 struct havoc : expression {
-  havoc() : expression( vsize_t() ) {}
-  havoc( vref< idn > l ) :
-    expression( vconvert< size_t >( l ) ) {}
+  havoc( string, string, string ) : expression( vsize_t() ) {}
+  havoc( string, string, vref< idn > l, string ) :
+    expression( vconvert_reverse< size_t >( l ) ) {}
 
   std::string print() {
     if ( flat.empty() )
@@ -534,24 +650,26 @@ struct havoc : expression {
       [&]( size_t e ) { return deitemise< idn >( e ).print(); }, flat );
     return printer( { "havoc ( ", " )" },
                     { printer( v, vstr_t( v.size() - 1, ", " ) ) } );
-    //return printer( { "havoc ( ", " )" }, { get< idn_list_e >( 0 ).print() } );
   }
 };
 
 template<>
 bimap< havoc > symbol_storage< havoc >;
+//--------------------------------------------------
 
-//<atom> ::= <bool-term> |
-//           <arith-term> <rop> <arith-term>
-//           <array-write> = [ <arith-list> ]
-//           <havoc>
+//--------------------------------------------------
+//--------------------Atom class--------------------
+//<atom> ::= <bool-term>
+//         | <arith-term> <rop> <arith-term>
+//         | <array-write> = [ <arith-list> ]
+//         | <havoc>
 struct atom : expression {
   enum kind { boolean_term, relation, array_equality, havoced };
 
   atom( eref< bool_term > b ) : expression( { boolean_term, b } ) {}
   atom( eref< arith_term > l, eref< rop > o, eref< arith_term > r ) :
     expression( { relation, l, o, r } ) {}
-  atom( eref< array_write > a, eref< arith_list > l ) :
+  atom( eref< array_write > a, string, string, eref< arith_list > l, string ) :
     expression( { array_equality, a, l } ) {}
   atom( eref< havoc > h ) : expression( { havoced, h } ) {}
 
@@ -572,14 +690,15 @@ template<>
 bimap< atom > symbol_storage< atom >;
 //--------------------------------------------------
 
+//------------------------------Formulae----------------------
+
 //--------------------------------------------------
-//----------Formulae syntax-------------------------
-//<quantifier> ::= { forall,
-//                   exists }
+//--------------------Quantifier class--------------
+//<quantifier> ::= { forall, exists }
 struct quantifier : expression {
   enum kind { forall, exists };
 
-  quantifier( kind k ) : expression( { k } ) {}
+  quantifier( string s ) : expression( { (s == "forall" ? forall : exists) } ) {}
 
   string print() {
     return (flat[ 0 ] == forall) ? "forall " : "exists ";
@@ -588,14 +707,18 @@ struct quantifier : expression {
 
 template<>
 bimap< quantifier > symbol_storage< quantifier >;
+//--------------------------------------------------
 
-//<q-type> ::= <type> |
-//             <type> [ <arith-term> , <arith-term> ]
+//--------------------------------------------------
+//--------------------Quantified type class---------
+//<q-type> ::= <type>
+//           | <type> [ <arith-term> , <arith-term> ]
 struct q_type : expression {
   enum kind { unbound, bound };
 
   q_type( eref< type > t ) : expression( { unbound, t } ) {}
-  q_type( eref< type > t, eref< arith_term > l, eref< arith_term > u ) :
+  q_type( eref< type > t, string&, eref< arith_term > l, string&,
+          eref< arith_term > u, string& ) :
     expression( { bound, t, l, u } ) {}
 
   std::string print() {
@@ -610,29 +733,36 @@ struct q_type : expression {
 
 template<>
 bimap< q_type > symbol_storage< q_type >;
+//--------------------------------------------------
 
-//<formula> ::= <atom> |
-//              ( <formula> ) |
-//              <formula> <bop> <formula> |
-//              not <formula> |
-//              <quantifier> <idn-list> : <q-type> . <formula>
+//--------------------------------------------------
+//--------------------Formula class-----------------
+//<formula> ::= <atom>
+//            | ( <formula> )
+//            | <formula> <bop> <formula>
+//            | not <formula>
+//            | <quantifier> <idn-list> : <q-type> . <formula>
 struct formula : expression {
   enum kind { atomic, parenthesised, boolean, negated, quantified };
 
-  formula( eref< atom > a, eref< bop > b, eref< formula > f ) :
-    expression( { boolean, itemise< formula >( formula( a ) ), b, f } ) {}
-  formula( eref< formula > l,  eref< bop > b, eref< formula > r, bool n = false ) :
-    expression( { boolean, itemise< formula >( formula( l, n ) ), b, r } ) {}
-  formula( eref< quantifier > q, eref< idn_list > l, eref< q_type > t,
-           eref< formula > lf, eref< bop > b, eref< formula > rf ) :
-    expression( { boolean, itemise< formula >( formula( q, l, t, lf ) ), b, rf } ) {}
-
+  formula( eref< atom > a, eref< bop > o, eref< formula > f ) :
+    expression( { boolean, itemise( formula( a ) ), o, f } ) {}
+  formula( string& lp, eref< formula > l, string& rp, eref< bop > o,
+           eref< formula > r ) :
+    expression( { boolean, itemise( formula( lp, l, rp ) ), o, r } ) {}
+  formula( string& n, eref< formula > l, eref< bop > o, eref< formula > r ) :
+    expression( { boolean, itemise( formula( n, l ) ), o, r } ) {}
+  formula( eref< quantifier > q, eref< idn_list > i, string c, eref< q_type > t,
+           string d, eref< formula > l, eref< bop > b, eref< formula > r ) :
+    expression( { boolean,
+                  itemise< formula >( formula( q, i, c, t, d, l ) ),
+                  b, r } ) {}
   
   formula( eref< atom > a ) : expression( { atomic, a } ) {}
-  formula( eref< formula > f, bool n = false ) :
-    expression( { (n ? negated : parenthesised), f } ) {}
-  formula( eref< quantifier > q, eref< idn_list > l, eref< q_type > t,
-           eref< formula > f ) :
+  formula( string&, eref< formula > f, string& ) : expression( { parenthesised, f } ) {}
+  formula( string&, eref< formula > f ) : expression( { negated, f } ) {}
+  formula( eref< quantifier > q, eref< idn_list > l, string&, eref< q_type > t,
+           string&, eref< formula > f ) :
     expression( { quantified, q, l, t, f } ) {}
 
   std::string print() {

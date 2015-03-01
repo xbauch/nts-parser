@@ -3,161 +3,163 @@
 
 #pragma once
 
-build_op< rop, rkind::rop_equ > bop_equ;
-build_op< rop, rkind::rop_neq > bop_ne;
-build_op< rop, rkind::rop_leq > bop_le;
-build_op< rop, rkind::rop_ltn > bop_lt;
-build_op< rop, rkind::rop_geq > bop_ge;
-build_op< rop, rkind::rop_gtn > bop_gt;
-
 //-------------------------------------------------
 //--------------------Rop parser-------------------
 //<rop> ::= {=,!=,<=,<,>=,>}
-handle< rop > const equ_rop() {
-  return log( "=", all( bop_equ, equal_tok ) );
-}
 
-handle< rop > const neq_rop() {
-  return log( "!=", all( bop_ne, neq_tok ) );
-}
+//----------Rop builders------------------
 
-handle< rop > const leq_rop() {
-  return log( "<=", all( bop_le, leq_tok ) );
-}
+template<>
+builder_t< rop, string >
+  builder< rop, string >;
 
-handle< rop > const ltn_rop() {
-  return log( "<", all( bop_lt, lt_tok ) );
-}
-
-handle< rop > const geq_rop() {
-  return log( ">=", all( bop_ge, geq_tok ) );
-}
-
-handle< rop > const gtn_rop() {
-  return log( ">", all( bop_gt, gt_tok ) );
-}
-
+//----------Rop parser--------------------
 template<>
 const handle< rop > parser< rop > =
-   attempt( equ_rop() )
-|| attempt( neq_rop() )
-|| attempt( leq_rop() )
-|| attempt( ltn_rop() )
-|| attempt( geq_rop() )
-||          gtn_rop();
+   attempt( caller< rop >( "rop:=",
+                           equal_tok ) )
+|| attempt( caller< rop >( "rop:!=",
+                           neq_tok ) )
+|| attempt( caller< rop >( "rop:<=",
+                           leq_tok ) )
+|| attempt( caller< rop >( "rop:<",
+                           lt_tok ) )
+|| attempt( caller< rop >( "rop:>=",
+                           geq_tok ) )
+||          caller< rop >( "rop:>",
+                           gt_tok );
 //-------------------------------------------------
 
-build_cat< idn > buc_idn;
-build_vectorise< idn > buv_idn;
+//-------------------------------------------------
+//--------------------Idn-list vector syntax-------
+//<v-idn-list> ::= <idn> , <v-idn-list>
+//               | <idn>
 
-const vhandle< idn > cat_idn_cm( handle< idn > hi, vhandle< idn > vi ) {
-  return log( "idn-list-rec", all( buc_idn, hi, comma_tok, vi ) );
-}
+//----------Idn-list vector builders------
+template<>
+consbuilder_t< idn, string, vref< idn >, eref< idn > >
+  consbuilder< idn, string, vref< idn >, eref< idn > >;
 
-const vhandle< idn > vec_idn( handle< idn > hi ) {
-  return log( "idn-list-last", all( buv_idn, hi ) );
-}
+template<>
+lastbuilder_t< idn, eref< idn > >
+  lastbuilder< idn, eref< idn > >;
 
+//----------Idn-list vector parser--------
 template<>
 const vhandle< idn > vparser_cm< idn > =
-   attempt( cat_idn_cm( reference( "elem", parser< idn > ),
-                        reference( "sep", vparser_cm< idn > ) ) )
-||          vec_idn( reference( "elem", parser< idn > ) );
-
-build_itemise_vector< idn_list, idn > biv_ili;
+   attempt( conscaller< idn >( "idns:cons",
+                               comma_tok,
+                               reference( "idns", vparser_cm< idn > ),
+                               reference( "idn",  parser< idn > ) ) )
+||          lastcaller< idn >( "idns:last",
+                               reference( "idn", parser< idn > ) );
+//-------------------------------------------------                     
 
 //-------------------------------------------------
-//--------------------Idn-list parser--------------
-//<idn-list> ::= <idn> |
-//               <idn-list> , <idn>
-handle< idn_list > const non_idn_list( vhandle< idn > vi ) {
-  return log( "idn-list", all( biv_ili, vi ) );
-}
+//--------------------Idn-list syntax--------------
+//<idn-list> ::= <idn>
+//             |  <idn-list> , <idn>
 
+//----------Idn-list builders-------------
+template<>
+builder_t< idn_list, vref< idn > >
+  builder< idn_list, vref< idn > >;
+
+//----------Idn-list parser---------------
 template<>
 const handle< idn_list > parser< idn_list > =
-  non_idn_list( reference( "idn", vparser_cm< idn > ) );
+            caller< idn_list >( "idn-list:non-empty",
+                                reference( "idns", vparser_cm< idn > ) );
 //-------------------------------------------------
 
-build_itemise_vector< idn_list_e, idn > biv_ile;
-build_empty< idn_list_e > bue_ile;
-
 //-------------------------------------------------
-//--------------------Idn-list-e parser------------
-//<idn-list-e> ::= <idn-list> |
-//                 epsilon
-const handle< idn_list_e > non_idn_list_e( vhandle< idn > vi ) {
-  return log( "idn-list-nonempty", all( biv_ile, vi ) );
-}
+//--------------------Idn-list-e syntax------------
+//<idn-list-e> ::= <idn-list>
+//               | epsilon
 
-const handle< idn_list_e > emp_idn_list_e() {
-  return log( "idn-list-empty", all( bue_ile, empty_tok ) );
-}
+//----------Idn-list-e builders-----------
+template<>
+builder_t< idn_list_e, vref< idn > >
+  builder< idn_list_e, vref< idn > >;
 
 template<>
-const handle< idn_list_e > parser< idn_list_e > =
-   attempt( non_idn_list_e( reference( "idn", vparser_cm< idn > ) ) )
-||          emp_idn_list_e();
-//-------------------------------------------------
+builder_t< idn_list_e, string >
+  builder< idn_list_e, string >;
 
-build_itemise_vector< havoc, idn > biv_hai;
-build_empty< havoc > bue_hav;
+//----------Idn-list-e parser-------------
+template<>
+const handle< idn_list_e > parser< idn_list_e > =
+   attempt( caller< idn_list_e >( "idn-list-e:non-empty",
+                                  reference( "idns", vparser_cm< idn > ) ) )
+||          caller< idn_list_e >( "idn-list-e:empty", empty_tok );
+//-------------------------------------------------
 
 //-------------------------------------------------
 //--------------------Havoc parser-----------------
 //<havoc> ::= havoc ( <idn-list-e> )
-const handle< havoc > non_havo( vhandle< idn > vi ) {
-  return log( "havoc ( <idn-list> )", all( biv_hai, vi ) );
-}
 
-const handle< havoc > emp_havo() {
-  return log( "havoc ()", all( bue_hav, empty_tok ) );
-}
+//----------Havoc builders----------------
+template<>
+builder_t< havoc, string, string, vref< idn >, string >
+  builder< havoc, string, string, vref< idn >, string >;
 
+template<>
+builder_t< havoc, string, string, string >
+  builder< havoc, string, string, string >;
+
+//----------Havoc parser------------------
 template<>
 const handle< havoc > parser< havoc > =
-   discard( havoc_tok )
-&& discard( round_left_tok )
-&& ( attempt( non_havo( reference( "idn", vparser_cm< idn > ) ) )
-  ||          emp_havo() )
-&& discard( round_right_tok );
+   attempt( caller< havoc >( "havoc:non-empty",
+                             havoc_tok,
+                             round_left_tok,
+                             reference( "idns", vparser_cm< idn > ),
+                             round_right_tok ) )
+||          caller< havoc >( "havoc:empty",
+                             havoc_tok,
+                             round_left_tok,
+                             round_right_tok );
 //-------------------------------------------------
 
-build_itemise< atom, bool_term > bit_atb;
-build_binop< atom, rop, arith_term > bbi_ara;
-build_itemise_two_ss< atom, array_write, arith_list > bis_aaa;
-build_itemise< atom, havoc > bit_ath;
-
 //-------------------------------------------------
-//--------------------Atom parser------------------
-//<atom> ::= <bool-term> |
-//           <arith-term> <rop> <arith-term>
-//           <array-write> = [ <arith-list> ]
-//           <havoc>
-handle< atom > const boo_atom( handle< bool_term > ht ) {
-  return log( "atom-bool-term", all( bit_atb, ht ) );
-}
+//--------------------Atom syntax------------------
+//<atom> ::= <bool-term>
+//         | <arith-term> <rop> <arith-term>
+//         | <array-write> = [ <arith-list> ]
+//         | <havoc>
 
-handle< atom > const rop_atom( handle< arith_term > ht, handle< rop > hr ) {
-  return log( "atom-rop", all( bbi_ara, ht, hr, ht ) );
-}
-  
-const handle< atom > arr_atom( handle< array_write > ha, handle< arith_list > hl ) {
-  return log( "atom-array-equals", all( bis_aaa, ha, equal_tok, square_left_tok, hl ) );
-}
-
-const handle< atom > hav_atom( handle< havoc > hh ) {
-  return log( "atom-havoc", all( bit_ath, hh ) );
-}
+//----------Atom builders-----------------
+template<>
+builder_t< atom, eref< arith_term >, eref< rop >, eref< arith_term > >
+  builder< atom, eref< arith_term >, eref< rop >, eref< arith_term > >;
 
 template<>
+builder_t< atom, eref< array_write >, string, string, eref< arith_list >, string >
+  builder< atom, eref< array_write >, string, string, eref< arith_list >, string >;
+
+template<>
+builder_t< atom, eref< havoc > >
+  builder< atom, eref< havoc > >;
+
+template<>
+builder_t< atom, eref< bool_term > >
+  builder< atom, eref< bool_term > >;
+
+//----------Atom parser-------------------
+template<>
 handle< atom > const parser< atom > =
-//   attempt( boo_atom( reference( "bool-term", parser< bool_term > ) ) )
-   attempt( rop_atom( reference( "arith-term", parser< arith_term > ),
-                      reference( "rop", parser< rop > ) ) )
-|| attempt( arr_atom( reference( "array-write", parser< array_write > ),
-                      reference( "arith-list", parser< arith_list > ) )
-         && discard( square_right_tok ) )
-|| attempt( hav_atom( reference( "havoc", parser< havoc > ) ) )
-|| boo_atom( reference( "bool-term", parser< bool_term > ) );
+   attempt( caller< atom >( "atom:rop",
+                            reference( "arith-term", parser< arith_term > ),
+                            reference( "rop",        parser< rop > ),
+                            reference( "arith-term", parser< arith_term > ) ) )
+|| attempt( caller< atom >( "atom:array",
+                            reference( "array-write", parser< array_write > ),
+                            equal_tok,
+                            square_left_tok,
+                            reference( "arith-list",  parser< arith_list > ),
+                            square_right_tok ) )
+|| attempt( caller< atom >( "atom:havoc",
+                            reference( "havoc", parser< havoc > ) ) )
+||          caller< atom >( "atom:bool-term",
+                            reference( "bool-term", parser< bool_term > ) );
 //-------------------------------------------------
