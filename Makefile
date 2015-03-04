@@ -3,7 +3,7 @@ CXX=clang++
 #CFLAGS=-Wall -pedantic -g -ferror-limit=5 -DDEBUG
 CFLAGSDEBUG=-g -ferror-limit=5 -DDEBUG
 CFLAGSRELEASE=-O3
-#CFLAGS=-Wall -pedantic -g -fmax-errors=5
+#CFLAGSDEBUG=-Wall -pedantic -g -fmax-errors=5 -DDEBUG
 CXXFLAGS:=$(CFLAGSDEBUG) -I. -std=c++1z
 #CXXFLAGS:=$(CFLAGSRELEASE) -I. -std=c++1z
 TARGET=parser

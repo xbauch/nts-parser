@@ -7,11 +7,6 @@
 //--------------------Bop syntax-------------------
 //<bop> ::= {and,or,imply,equiv,&&,||,->,<->}
 
-//----------Bop builders------------------
-template<>
-builder_t< bop, string >
-  builder< bop, string >;
-
 //----------Bop parser--------------------
 template<>
 const handle< bop > parser< bop > =
@@ -31,15 +26,6 @@ const handle< bop > parser< bop > =
 //             | true
 //             | false
 
-//----------Bool-lit builders-------------
-template<>
-builder_t< bool_lit, eref< id > >
-  builder< bool_lit, eref< id > >;
-
-template<>
-builder_t< bool_lit, string >
-  builder< bool_lit, string >;
-
 //----------Bool-lit parser---------------
 template<>
 const handle< bool_lit > parser< bool_lit > =
@@ -57,29 +43,6 @@ const handle< bool_lit > parser< bool_lit > =
 //              | ( <bool-term> )
 //              | <not> <bool-term>
 //              | <bool-term> <bop> <bool-term>
-
-//----------Bool-term builders------------
-template<>
-builder_t< bool_term, eref< bool_lit >, eref< bop >, eref< bool_term > >
-  builder< bool_term, eref< bool_lit >, eref< bop >, eref< bool_term > >;
-template<>
-builder_t< bool_term, string, eref< bool_term >, string, eref< bop >,
-           eref< bool_term > >
-  builder< bool_term, string, eref< bool_term >, string, eref< bop >,
-           eref< bool_term > >;
-template<>
-builder_t< bool_term, string, eref< bool_term >, eref< bop >, eref< bool_term > >
-  builder< bool_term, string, eref< bool_term >, eref< bop >, eref< bool_term > >;
-
-template<>
-builder_t< bool_term, eref< bool_lit > >
-  builder< bool_term, eref< bool_lit > >;
-template<>
-builder_t< bool_term, string, eref< bool_term >, string >
-  builder< bool_term, string, eref< bool_term >, string >;
-template<>
-builder_t< bool_term, string, eref< bool_term > >
-  builder< bool_term, string, eref< bool_term > >;
 
 //----------Bool-term parser--------------
 template<>

@@ -10,20 +10,6 @@
 //              | <numeral>
 //              | <decimal>
 
-//----------Arith-lit builders------------
-template<>
-builder_t< arith_lit, eref< id > >
-  builder< arith_lit, eref< id > >;
-template<>
-builder_t< arith_lit, string >
-  builder< arith_lit, string >;
-template<>
-builder_t< arith_lit, eref< decimal > >
-  builder< arith_lit, eref< decimal > >;
-template<>
-builder_t< arith_lit, eref< numeral > >
-  builder< arith_lit, eref< numeral > >;
-
 //----------Arith-lit parser--------------
 template<>
 const handle< arith_lit >  parser< arith_lit > =
@@ -40,11 +26,6 @@ const handle< arith_lit >  parser< arith_lit > =
 //-------------------------------------------------
 //--------------------Aop parser-------------------
 //<aop> ::= {+,-,*,/,%}
-
-//----------Aop builders------------------
-template<>
-builder_t< aop, string >
-  builder< aop, string >;
 
 //----------Aop parser--------------------
 template<>
@@ -65,59 +46,6 @@ const handle< aop > parser< aop > =
 //--------------------Index-term vector syntax-----
 // <v-index-term> ::= <index-term> ][ <v-index-term>
 //                  | <index-term>
-
-//----------Index-term vector builders----
-template<>
-consbuilder_t< index_term, string, vref< index_term >, eref< idn >, string,
-               vref< index_term >, string, eref< aop >, vref< index_term > >
-  consbuilder< index_term, string, vref< index_term >, eref< idn >, string,
-               vref< index_term >, string, eref< aop >, vref< index_term > >;
-template<>
-consbuilder_t< index_term, string, vref< index_term >, eref< arith_lit >,
-               eref< aop >, vref< index_term > >
-  consbuilder< index_term, string, vref< index_term >, eref< arith_lit >,
-               eref< aop >, vref< index_term > >;
-template<>
-consbuilder_t< index_term, string, vref< index_term >, string, vref< index_term >,
-               string, eref< aop >, vref< index_term > >
-  consbuilder< index_term, string, vref< index_term >, string, vref< index_term >,
-               string, eref< aop >, vref< index_term > >;
-template<>
-consbuilder_t< index_term, string, vref< index_term >, eref< idn >, string,
-               vref< index_term >, string >
-  consbuilder< index_term, string, vref< index_term >, eref< idn >, string,
-               vref< index_term >, string >;
-template<>
-consbuilder_t< index_term, string, vref< index_term >, eref< arith_lit > >
-  consbuilder< index_term, string, vref< index_term >, eref< arith_lit > >;
-template<>
-consbuilder_t< index_term, string, vref< index_term >, string, vref< index_term >,
-               string >
-  consbuilder< index_term, string, vref< index_term >, string, vref< index_term >,
-               string>;
-
-template<>
-lastbuilder_t< index_term, eref< idn >, string,
-               vref< index_term >, string, eref< aop >, vref< index_term > >
-  lastbuilder< index_term, eref< idn >, string,
-               vref< index_term >, string, eref< aop >, vref< index_term > >;
-template<>
-lastbuilder_t< index_term, eref< arith_lit >, eref< aop >, vref< index_term > >
-  lastbuilder< index_term, eref< arith_lit >, eref< aop >, vref< index_term > >;
-template<>
-lastbuilder_t< index_term, string, vref< index_term >, string, eref< aop >,
-               vref< index_term > >
-  lastbuilder< index_term, string, vref< index_term >, string, eref< aop >,
-               vref< index_term > >;
-template<>
-lastbuilder_t< index_term, eref< idn >, string, vref< index_term >, string >
-  lastbuilder< index_term, eref< idn >, string, vref< index_term >, string >;
-template<>
-lastbuilder_t< index_term, eref< arith_lit > >
-  lastbuilder< index_term, eref< arith_lit > >;
-template<>
-lastbuilder_t< index_term, string, vref< index_term >, string >
-  lastbuilder< index_term, string, vref< index_term >, string >;
 
 //----------Index-term vector parser------
 template<>
@@ -213,11 +141,6 @@ const vhandle< index_term > vparser_sq< index_term > =
 //                | ( <index-term> )
 //                | <index-term> [ <index-term> ]
 
-//----------Index-term builders-----------
-template<>
-builder_t< index_term, vref< index_term > >
-  builder< index_term, vref< index_term > >;
-
 //----------Index-term parser-------------
 template<>
 const handle< index_term > parser< index_term > =
@@ -229,11 +152,6 @@ const handle< index_term > parser< index_term > =
 //--------------------Array-read syntax------------
 //<array-read> ::= <idn> [ <index-term> ]
 //               | <array-read> [ <index-term> ]
-
-//----------Array-read builders-----------
-template<>
-builder_t< array_read, eref< idn >, string, vref< index_term >, string >
-  builder< array_read, eref< idn >, string, vref< index_term >, string >;
 
 //----------Array-read parser-------------
 template<>
@@ -250,15 +168,6 @@ const handle< array_read > parser< array_read > =
 //<array-term> ::= <array-read>
 //               | |<idn>|
 
-//----------Array-term builders-----------
-template<>
-builder_t< array_term, eref< array_read > >
-  builder< array_term, eref< array_read > >;
-
-template<>
-builder_t< array_term, string, eref< idn >, string >
-  builder< array_term, string, eref< idn >, string >;
-
 //----------Array-term parser-------------
 template<>
 const handle< array_term > parser< array_term > =
@@ -273,11 +182,6 @@ const handle< array_term > parser< array_term > =
 //-------------------------------------------------
 //--------------------Sign syntax------------------
 //<sign> ::= {-} | epsilon
-
-//----------Sign builders-----------------
-template<>
-builder_t< sign, string >
-  builder< sign, string >;
 
 //----------Sign parser-------------------
 template<>
@@ -294,33 +198,6 @@ const handle< sign > parser< sign > =
 //               | <sign> <array-term>
 //               | ( <arith-term> )
 //               | <arith-term> <aop> <arith-term>
-
-//----------Arith-term buiders------------
-template<>
-builder_t< arith_term, string, eref< arith_term >, string, eref< aop >,
-           eref< arith_term > >
-  builder< arith_term, string, eref< arith_term >, string, eref< aop >,
-           eref< arith_term > >;
-template<>
-builder_t< arith_term, string, eref< arith_term >, string >
-  builder< arith_term, string, eref< arith_term >, string >;
-template<>
-builder_t< arith_term, eref< sign >, eref< arith_lit >, eref< aop >,
-           eref< arith_term > >
-  builder< arith_term, eref< sign >, eref< arith_lit >, eref< aop >,
-           eref< arith_term > >;
-template<>
-builder_t< arith_term, eref< sign >, eref< array_term >, eref< aop >,
-           eref< arith_term > >
-  builder< arith_term, eref< sign >, eref< array_term >, eref< aop >,
-           eref< arith_term > >;
-template<>
-builder_t< arith_term, eref< sign >, eref< arith_lit > >
-  builder< arith_term, eref< sign >, eref< arith_lit > >;
-template<>
-builder_t< arith_term, eref< sign >, eref< array_term > >
-  builder< arith_term, eref< sign >, eref< array_term > >;
-
 
 //----------Arith-term parser--------------
 template<>
@@ -376,11 +253,6 @@ const vhandle< arith_term > vparser_cm< arith_term > =
 //<arith-list> ::= <arith-term>
 //               | <arith-list> , <arith-term>
 
-//----------Arith-list builders-----------
-template<>
-builder_t< arith_list, vref< arith_term > >
-  builder< arith_list, vref< arith_term > >;
-
 //----------Arith-list parser-------------
 template<>
 const handle< arith_list > parser< arith_list > =
@@ -392,15 +264,6 @@ const handle< arith_list > parser< arith_list > =
 //--------------------Arith-list-e syntax----------
 //<arith-list-e> ::= <arith-list>
 //                 | epsilon
-
-//----------Arith-list-e builders---------
-template<>
-builder_t< arith_list_e, vref< arith_term > >
-  builder< arith_list_e, vref< arith_term > >;
-
-template<>
-builder_t< arith_list_e, string >
-  builder< arith_list_e, string >;
 
 //----------Arith-list-e parser-----------
 template<>
@@ -417,15 +280,6 @@ const handle< arith_list_e > parser< arith_list_e > =
 //--------------------Arith-term vector syntax-----
 // <v-arith-term> ::= <arith-term> ][ <v-arith-term>
 //                  | <arith-term>
-
-//----------Arith-term vector builders----
-template<>
-consbuilder_t< arith_term, string, vref< arith_term >, eref< arith_term > >
-  consbuilder< arith_term, string, vref< arith_term >, eref< arith_term > >;
-
-template<>
-lastbuilder_t< arith_term, eref< arith_term > >
-  lastbuilder< arith_term, eref< arith_term > >;
 
 //----------Arith-term vector parser------
 template<>
@@ -445,19 +299,6 @@ const vhandle< arith_term > vparser_sq< arith_term > =
 //<multi> ::= [ <arith-term> ] <multi> |
 //            [ <arith-list> ] |
 //            epsilon
-
-//----------Multi builders----------------
-template<>
-builder_t< multi, string, vref< arith_term >, string, vref< arith_term >, string >
-  builder< multi, string, vref< arith_term >, string, vref< arith_term >, string >;
-
-template<>
-builder_t< multi, string, vref< arith_term >, string >
-  builder< multi, string, vref< arith_term >, string >;
-
-template<>
-builder_t< multi, string >
-  builder< multi, string >;
 
 //----------Multi parser------------------
 template<>
@@ -479,11 +320,6 @@ const handle< multi > parser< multi > =
 //-------------------------------------------------
 //--------------------Array-write syntax-----------
 //<array-write> ::= <idp> <multi>
-
-//----------Array-write builders----------
-template<>
-builder_t< array_write, eref< idp >, eref< multi > >
-  builder< array_write, eref< idp >, eref< multi > >;
 
 //----------Array-write parser------------
 template<>

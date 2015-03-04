@@ -7,12 +7,6 @@
 //--------------------Rop parser-------------------
 //<rop> ::= {=,!=,<=,<,>=,>}
 
-//----------Rop builders------------------
-
-template<>
-builder_t< rop, string >
-  builder< rop, string >;
-
 //----------Rop parser--------------------
 template<>
 const handle< rop > parser< rop > =
@@ -35,15 +29,6 @@ const handle< rop > parser< rop > =
 //<v-idn-list> ::= <idn> , <v-idn-list>
 //               | <idn>
 
-//----------Idn-list vector builders------
-template<>
-consbuilder_t< idn, string, vref< idn >, eref< idn > >
-  consbuilder< idn, string, vref< idn >, eref< idn > >;
-
-template<>
-lastbuilder_t< idn, eref< idn > >
-  lastbuilder< idn, eref< idn > >;
-
 //----------Idn-list vector parser--------
 template<>
 const vhandle< idn > vparser_cm< idn > =
@@ -60,11 +45,6 @@ const vhandle< idn > vparser_cm< idn > =
 //<idn-list> ::= <idn>
 //             |  <idn-list> , <idn>
 
-//----------Idn-list builders-------------
-template<>
-builder_t< idn_list, vref< idn > >
-  builder< idn_list, vref< idn > >;
-
 //----------Idn-list parser---------------
 template<>
 const handle< idn_list > parser< idn_list > =
@@ -77,15 +57,6 @@ const handle< idn_list > parser< idn_list > =
 //<idn-list-e> ::= <idn-list>
 //               | epsilon
 
-//----------Idn-list-e builders-----------
-template<>
-builder_t< idn_list_e, vref< idn > >
-  builder< idn_list_e, vref< idn > >;
-
-template<>
-builder_t< idn_list_e, string >
-  builder< idn_list_e, string >;
-
 //----------Idn-list-e parser-------------
 template<>
 const handle< idn_list_e > parser< idn_list_e > =
@@ -97,15 +68,6 @@ const handle< idn_list_e > parser< idn_list_e > =
 //-------------------------------------------------
 //--------------------Havoc parser-----------------
 //<havoc> ::= havoc ( <idn-list-e> )
-
-//----------Havoc builders----------------
-template<>
-builder_t< havoc, string, string, vref< idn >, string >
-  builder< havoc, string, string, vref< idn >, string >;
-
-template<>
-builder_t< havoc, string, string, string >
-  builder< havoc, string, string, string >;
 
 //----------Havoc parser------------------
 template<>
@@ -127,23 +89,6 @@ const handle< havoc > parser< havoc > =
 //         | <arith-term> <rop> <arith-term>
 //         | <array-write> = [ <arith-list> ]
 //         | <havoc>
-
-//----------Atom builders-----------------
-template<>
-builder_t< atom, eref< arith_term >, eref< rop >, eref< arith_term > >
-  builder< atom, eref< arith_term >, eref< rop >, eref< arith_term > >;
-
-template<>
-builder_t< atom, eref< array_write >, string, string, eref< arith_list >, string >
-  builder< atom, eref< array_write >, string, string, eref< arith_list >, string >;
-
-template<>
-builder_t< atom, eref< havoc > >
-  builder< atom, eref< havoc > >;
-
-template<>
-builder_t< atom, eref< bool_term > >
-  builder< atom, eref< bool_term > >;
 
 //----------Atom parser-------------------
 template<>

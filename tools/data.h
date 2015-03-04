@@ -57,7 +57,7 @@ struct bimap {
 };
 
 template< typename T >
-bimap< T > symbol_storage;
+bimap< T > symbol_storage = bimap< T >();
 
 template< typename T, typename F = typename T::is_referenceable >
 struct eref {

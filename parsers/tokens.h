@@ -89,11 +89,6 @@ auto const gt_tok =    tokenise( accept( is_char( '>' ) ) );
 //--------------------Type syntax------------------
 //<type> ::= {int,real,bool}
 
-//----------Type builders-----------------
-template<>
-builder_t< type, string >
-  builder< type, string >;
-
 //----------Type parser-------------------
 template<>
 const handle< type > parser< type > =
@@ -109,11 +104,6 @@ const handle< type > parser< type > =
 //--------------------Numeral syntax---------------
 //<numeral> ::= {0} | {1..9}{0..9}*
 
-//----------Numeral builders--------------
-template<>
-builder_t< numeral, string >
-  builder< numeral, string >;
-
 //----------Numeral parser----------------
 template<>
 const handle< numeral > parser< numeral > =
@@ -124,11 +114,6 @@ const handle< numeral > parser< numeral > =
 //-------------------------------------------------
 //--------------------Decimal syntax---------------
 //<decimal> ::= <numeral> {.}{0..9}+
-
-//----------Decimal builders--------------
-template<>
-builder_t< decimal, string >
-  builder< decimal, string >;
 
 //----------Decimal parser----------------
 template<>
@@ -141,11 +126,6 @@ const handle< decimal > parser< decimal > =
 //--------------------Boolean syntax---------------
 //<boolean> ::= {true,false}
 
-//----------Boolean builders--------------
-template<>
-builder_t< boolean, string >
-  builder< boolean, string >;
-
 //----------Boolean parser----------------
 template<>
 const handle< boolean > parser< boolean > =
@@ -156,11 +136,6 @@ const handle< boolean > parser< boolean > =
 //-------------------------------------------------
 //--------------------Idn syntax-------------------
 //<idn> ::= {a..z,A..Z}{a..z,A..Z,0..9,_}*
-
-//----------Idn builders------------------
-template<>
-builder_t< idn, string >
-  builder< idn, string >;
 
 //----------Idn parser--------------------
 template<>
@@ -173,11 +148,6 @@ const handle< idn > parser< idn > =
 //--------------------Idp syntax-------------------
 //<idp> ::= <idp> {'}
 
-//----------Idp builders------------------
-template<>
-builder_t< idp, string >
-  builder< idp, string >;
-
 //----------Idp parser--------------------
 template<>
 const handle< idp > parser< idp > =
@@ -189,15 +159,6 @@ const handle< idp > parser< idp > =
 //--------------------Id syntax--------------------
 //<id> ::= <idn>
 //       | <idp>
-
-//----------Id builders-------------------
-template<>
-builder_t< id, eref< idp > >
-  builder< id, eref< idp > >;
-
-template<>
-builder_t< id, eref< idn > >
-  builder< id, eref< idn > >;
 
 //----------Id parser---------------------
 template<>

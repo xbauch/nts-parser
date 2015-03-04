@@ -78,7 +78,7 @@ struct builder_t {
 };
 
 template< typename... Ts >
-builder_t< Ts... > builder;
+builder_t< Ts... > builder = builder_t< Ts... >();
 
 template< typename T, typename... Ts >
 const handle< T > caller( string log_name, Ts... ts ) {
@@ -95,7 +95,7 @@ struct consbuilder_t {
 };
 
 template< typename... Ts >
-consbuilder_t< Ts... > consbuilder;
+consbuilder_t< Ts... > consbuilder = consbuilder_t< Ts... >();
 
 template< typename T, typename P, typename S, typename... Ts >
 const vhandle< T > conscaller( string log_name, P p, S s, Ts... ts ) {
@@ -113,7 +113,7 @@ struct lastbuilder_t {
 };
 
 template< typename... Ts >
-lastbuilder_t< Ts... > lastbuilder;
+lastbuilder_t< Ts... > lastbuilder = lastbuilder_t< Ts... >();
 
 template< typename T, typename... Ts >
 const vhandle< T > lastcaller( string log_name, Ts... ts ) {

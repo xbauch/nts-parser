@@ -32,9 +32,6 @@ struct type : expression {
     }
   }
 };
-
-template<>
-bimap< type > symbol_storage< type >;
 //--------------------------------------------------
 
 //--------------------------------------------------
@@ -68,13 +65,6 @@ struct constant : expression {
 using numeral = constant< int >;
 using decimal = constant< double >;
 using boolean = constant< bool >;
-
-template<>
-bimap< boolean > symbol_storage< boolean >;
-template<>
-bimap< numeral > symbol_storage< numeral >;
-template<>
-bimap< decimal > symbol_storage< decimal >;
 //--------------------------------------------------
 
 //--------------------------------------------------
@@ -118,11 +108,6 @@ using unprimed = false_type;
 
 using idn = variable< unprimed >;
 using idp = variable< primed >;
-
-template<>
-bimap< idp > symbol_storage< idp >;
-template<>
-bimap< idn > symbol_storage< idn >;
 //--------------------------------------------------
 
 //--------------------------------------------------
@@ -142,9 +127,6 @@ struct id : expression {
       return get< idp >().print();
   }
 };
-
-template<>
-bimap< id > symbol_storage< id >;
 //--------------------------------------------------
 
 //--------------------------------------------------
@@ -175,9 +157,6 @@ struct bop : expression {
     }
   }
 };
-
-template<>
-bimap< bop > symbol_storage< bop >;
 //--------------------------------------------------
 
 //--------------------------------------------------
@@ -200,9 +179,6 @@ struct bool_lit : expression {
     }
   }
 };
-
-template<>
-bimap< bool_lit > symbol_storage< bool_lit >;
 //--------------------------------------------------
 
 //--------------------------------------------------
@@ -240,9 +216,6 @@ struct bool_term : expression {
     }
   }
 };
-
-template<>
-bimap< bool_term > symbol_storage< bool_term >;
 //--------------------------------------------------
 
 //--------------------------------------------------
@@ -269,9 +242,6 @@ struct arith_lit : expression {
     }
   }
 };
-
-template<>
-bimap< arith_lit > symbol_storage< arith_lit >;
 //-------------------------------------------------
 
 //-------------------------------------------------
@@ -304,9 +274,7 @@ struct aop : expression {
     }
   }
 };
-
-template<>
-bimap< aop > symbol_storage< aop >;
+//--------------------------------------------------
 
 //--------------------------------------------------
 //--------------------Index-term class--------------
@@ -357,9 +325,6 @@ struct index_term : expression {
       "[" + printer( v, vstr_t( v.size() - 1, "][" ) ) + "]";
   }
 };
-
-template<>
-bimap< index_term > symbol_storage< index_term >;
 //--------------------------------------------------
 
 //--------------------------------------------------
@@ -380,9 +345,6 @@ struct array_read : expression {
            "[" + printer( v, vstr_t( v.size() - 1, "][" ) ) + "]";
   }
 };
-
-template<>
-bimap< array_read > symbol_storage< array_read >;
 //--------------------------------------------------
 
 //--------------------------------------------------
@@ -402,9 +364,6 @@ struct array_term : expression {
       return "|" + get< idn >().print() + "|";
   }
 };
-
-template<>
-bimap< array_term > symbol_storage< array_term >;
 //--------------------------------------------------
 
 //--------------------------------------------------
@@ -419,9 +378,6 @@ struct sign : expression {
     return (flat[ 0 ] == sign_true) ? "-" : "";
   }
 };
-
-template<>
-bimap< sign > symbol_storage< sign >;
 //--------------------------------------------------
 
 //--------------------------------------------------
@@ -463,9 +419,6 @@ struct arith_term : expression {
     }
   }
 };
-
-template<>
-bimap< arith_term > symbol_storage< arith_term >;
 //--------------------------------------------------
 
 //--------------------------------------------------
@@ -482,9 +435,6 @@ struct arith_list : expression {
     return printer( v, vstr_t( v.size() - 1, ", " ) );
   }
 };
-
-template<>
-bimap< arith_list > symbol_storage< arith_list >;
 //--------------------------------------------------
 
 //--------------------------------------------------
@@ -504,9 +454,6 @@ struct arith_list_e : expression {
     return printer( v, vstr_t( v.size() - 1, ", " ) );
   }
 };
-
-template<>
-bimap< arith_list_e > symbol_storage< arith_list_e >;
 //--------------------------------------------------
 
 //--------------------------------------------------
@@ -537,9 +484,6 @@ struct multi : expression {
     return ret + "[" + printer( v2, vstr_t( v2.size() - 1, ", " ) ) + "]";
   }
 };
-
-template<>
-bimap< multi > symbol_storage< multi >;
 //--------------------------------------------------
 
 //--------------------------------------------------
@@ -552,9 +496,6 @@ struct array_write : expression {
     return printer( extractor< idp, multi >( 0 ), { " " } );
   }
 };
-
-template<>
-bimap< array_write > symbol_storage< array_write >;
 //--------------------------------------------------
 
 //--------------------------------------------------
@@ -587,9 +528,6 @@ struct rop : expression {
     }
   }
 };
-
-template<>
-bimap< rop > symbol_storage< rop >;
 //--------------------------------------------------
 
 //--------------------------------------------------
@@ -608,9 +546,6 @@ struct idn_list : expression {
     return printer( v, vstr_t( v.size() - 1, ", " ) );
   }
 };
-
-template<>
-bimap< idn_list > symbol_storage< idn_list >;
 //--------------------------------------------------
 
 //--------------------------------------------------
@@ -630,9 +565,6 @@ struct idn_list_e : expression {
     return printer( v, vstr_t( v.size() - 1, ", " ) );
   }
 };
-
-template<>
-bimap< idn_list_e > symbol_storage< idn_list_e >;
 //--------------------------------------------------
 
 //--------------------------------------------------
@@ -652,9 +584,6 @@ struct havoc : expression {
                     { printer( v, vstr_t( v.size() - 1, ", " ) ) } );
   }
 };
-
-template<>
-bimap< havoc > symbol_storage< havoc >;
 //--------------------------------------------------
 
 //--------------------------------------------------
@@ -685,9 +614,6 @@ struct atom : expression {
     }
   }
 };
-
-template<>
-bimap< atom > symbol_storage< atom >;
 //--------------------------------------------------
 
 //------------------------------Formulae----------------------
@@ -704,9 +630,6 @@ struct quantifier : expression {
     return (flat[ 0 ] == forall) ? "forall " : "exists ";
   }
 };
-
-template<>
-bimap< quantifier > symbol_storage< quantifier >;
 //--------------------------------------------------
 
 //--------------------------------------------------
@@ -730,9 +653,6 @@ struct q_type : expression {
     }
   }
 };
-
-template<>
-bimap< q_type > symbol_storage< q_type >;
 //--------------------------------------------------
 
 //--------------------------------------------------
@@ -779,7 +699,4 @@ struct formula : expression {
     }
   }
 };
-
-template<>
-bimap< formula > symbol_storage< formula >;
 //--------------------------------------------------

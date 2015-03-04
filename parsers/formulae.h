@@ -10,10 +10,6 @@
 //--------------------Quantifier syntax------------
 //<quantifier> ::= { forall, exists }
 
-//----------Quantifier builders-----------
-template<>
-builder_t< quantifier, string >
-  builder< quantifier, string >;
 
 //----------Quantifier parser-------------
 template<>
@@ -28,17 +24,6 @@ const handle< quantifier > parser< quantifier > =
 //--------------------Quantified type syntax--------
 //<q-type> ::= <type>
 //           | <type> [ <arith-term> , <arith-term> ]
-
-//----------Quantified type builders------
-template<>
-builder_t< q_type, eref< type >, string, eref< arith_term >, string,
-           eref< arith_term >, string >
-  builder< q_type, eref< type >, string, eref< arith_term >, string,
-           eref< arith_term >, string >;
-
-template<>
-builder_t< q_type, eref< type > >
-  builder< q_type, eref< type > >;
 
 //----------Quantified type parser--------
 template<>
@@ -61,43 +46,6 @@ const handle< q_type > parser< q_type > =
 //            | <formula> <bop> <formula>
 //            | not <formula>
 //            | <quantifier> <idn-list> : <q-type> . <formula>
-
-//----------Formula builders--------------
-template<>
-builder_t< formula, eref< atom >, eref< bop >, eref< formula > >
-  builder< formula, eref< atom >, eref< bop >, eref< formula > >;
-
-template<>
-builder_t< formula, string, eref< formula >, string, eref< bop >, eref< formula > >
-  builder< formula, string, eref< formula >, string, eref< bop >, eref< formula > >;
-
-template<>
-builder_t< formula, string, eref< formula >, eref< bop >, eref< formula > >
-  builder< formula, string, eref< formula >, eref< bop >, eref< formula > >;
-
-template<>
-builder_t< formula, eref< quantifier >, eref< idn_list >, string, eref< q_type >,
-           string, eref< formula >, eref< bop >, eref< formula > >
-  builder< formula, eref< quantifier >, eref< idn_list >, string, eref< q_type >,
-           string, eref< formula >, eref< bop >, eref< formula > >;
-
-template<>
-builder_t< formula, eref< atom > >
-  builder< formula, eref< atom > >;
-
-template<>
-builder_t< formula, string, eref< formula >, string >
-  builder< formula, string, eref< formula >, string >;
-
-template<>
-builder_t< formula, string, eref< formula > >
-  builder< formula, string, eref< formula > >;
-
-template<>
-builder_t< formula, eref< quantifier >, eref< idn_list >, string, eref< q_type >,
-           string, eref< formula > >
-  builder< formula, eref< quantifier >, eref< idn_list >, string, eref< q_type >,
-           string, eref< formula > >;
 
 //----------Formula parser----------------
 template<>
