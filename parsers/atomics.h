@@ -11,34 +11,27 @@
 template<>
 const handle< rop > parser< rop > =
    attempt( caller< rop >( "rop:=",
-                           equal_tok ) )
+              equal_tok ) )
 || attempt( caller< rop >( "rop:!=",
-                           neq_tok ) )
+              neq_tok ) )
 || attempt( caller< rop >( "rop:<=",
-                           leq_tok ) )
+              leq_tok ) )
 || attempt( caller< rop >( "rop:<",
-                           lt_tok ) )
+              lt_tok ) )
 || attempt( caller< rop >( "rop:>=",
-                           geq_tok ) )
+              geq_tok ) )
 ||          caller< rop >( "rop:>",
-                           gt_tok );
+              gt_tok );
 //-------------------------------------------------
 
-//-------------------------------------------------
-//--------------------Idn-list vector syntax-------
-//<v-idn-list> ::= <idn> , <v-idn-list>
-//               | <idn>
-
-//----------Idn-list vector parser--------
 template<>
 const vhandle< idn > vparser_cm< idn > =
    attempt( conscaller< idn >( "idns:cons",
-                               comma_tok,
-                               reference( "idns", vparser_cm< idn > ),
-                               reference( "idn",  parser< idn > ) ) )
+              comma_tok,
+              reference( "idns", vparser_cm< idn > ),
+              reference( "idn",  parser< idn > ) ) )
 ||          lastcaller< idn >( "idns:last",
-                               reference( "idn", parser< idn > ) );
-//-------------------------------------------------                     
+              reference( "idn",  parser< idn > ) );
 
 //-------------------------------------------------
 //--------------------Idn-list syntax--------------
@@ -49,7 +42,7 @@ const vhandle< idn > vparser_cm< idn > =
 template<>
 const handle< idn_list > parser< idn_list > =
             caller< idn_list >( "idn-list:non-empty",
-                                reference( "idns", vparser_cm< idn > ) );
+              reference( "idns", vparser_cm< idn > ) );
 //-------------------------------------------------
 
 //-------------------------------------------------
@@ -61,8 +54,9 @@ const handle< idn_list > parser< idn_list > =
 template<>
 const handle< idn_list_e > parser< idn_list_e > =
    attempt( caller< idn_list_e >( "idn-list-e:non-empty",
-                                  reference( "idns", vparser_cm< idn > ) ) )
-||          caller< idn_list_e >( "idn-list-e:empty", empty_tok );
+              reference( "idns", vparser_cm< idn > ) ) )
+||          caller< idn_list_e >( "idn-list-e:empty",
+              empty_tok );
 //-------------------------------------------------
 
 //-------------------------------------------------
@@ -73,14 +67,14 @@ const handle< idn_list_e > parser< idn_list_e > =
 template<>
 const handle< havoc > parser< havoc > =
    attempt( caller< havoc >( "havoc:non-empty",
-                             havoc_tok,
-                             round_left_tok,
-                             reference( "idns", vparser_cm< idn > ),
-                             round_right_tok ) )
+              havoc_tok,
+              round_left_tok,
+              reference( "idns", vparser_cm< idn > ),
+              round_right_tok ) )
 ||          caller< havoc >( "havoc:empty",
-                             havoc_tok,
-                             round_left_tok,
-                             round_right_tok );
+              havoc_tok,
+              round_left_tok,
+              round_right_tok );
 //-------------------------------------------------
 
 //-------------------------------------------------
@@ -94,17 +88,17 @@ const handle< havoc > parser< havoc > =
 template<>
 handle< atom > const parser< atom > =
    attempt( caller< atom >( "atom:rop",
-                            reference( "arith-term", parser< arith_term > ),
-                            reference( "rop",        parser< rop > ),
-                            reference( "arith-term", parser< arith_term > ) ) )
+              reference( "arith-term",  parser< arith_term > ),
+              reference( "rop",         parser< rop > ),
+              reference( "arith-term",  parser< arith_term > ) ) )
 || attempt( caller< atom >( "atom:array",
-                            reference( "array-write", parser< array_write > ),
-                            equal_tok,
-                            square_left_tok,
-                            reference( "arith-list",  parser< arith_list > ),
-                            square_right_tok ) )
+              reference( "array-write", parser< array_write > ),
+              equal_tok,
+              square_left_tok,
+              reference( "arith-list",  parser< arith_list > ),
+              square_right_tok ) )
 || attempt( caller< atom >( "atom:havoc",
-                            reference( "havoc", parser< havoc > ) ) )
+              reference( "havoc",       parser< havoc > ) ) )
 ||          caller< atom >( "atom:bool-term",
-                            reference( "bool-term", parser< bool_term > ) );
+              reference( "bool-term",   parser< bool_term > ) );
 //-------------------------------------------------

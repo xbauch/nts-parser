@@ -39,7 +39,8 @@ vector< OutT > for_each( const tuple< Ts... >& tuple, Fun fun,
 
 template< typename OutT, typename... Ts, typename F >
 vector< OutT > for_each( F f, const tuple< Ts... >& tuple ) {
-  return for_each< F, OutT >( tuple, f, make_index_sequence< sizeof...( Ts ) >() );
+  return for_each< F, OutT >( tuple, f,
+                              make_index_sequence< sizeof...( Ts ) >() );
 }
 
 template< typename F, typename T >
@@ -50,7 +51,8 @@ void map_inplace( F f, std::vector< T >& in ) {
 }
 
 template< typename Out, typename F, typename In >
-Out map( F f, In&, typename In::iterator fst, typename In::iterator lst ) {
+Out map_replace( F f, In&, typename In::iterator fst,
+                 typename In::iterator lst ) {
   Out o;
   for( ; fst != lst; ++fst ) 
     o.push_back( f( *fst ) );
@@ -58,7 +60,8 @@ Out map( F f, In&, typename In::iterator fst, typename In::iterator lst ) {
 }
 
 template< typename Out, typename F, typename In >
-Out map( F f, In in ) { return map< Out >( f, in, in.begin(), in.end() ); }
+Out map_replace( F f, In in ) { return map_replace< Out >( f, in, in.begin(),
+                                                           in.end() ); }
  
 template< typename T >
 T cat( T first, T second ) {
@@ -74,12 +77,14 @@ T cat( T first, T second, Vs... vs ) {
 
 template< typename Out, typename In >
 vector< Out > vconvert( vector< In > in ) {
-  return map< vector< Out > >( []( auto a ) { return Out( a ); }, in );
+  return map_replace< vector< Out > >( []( auto a ) { return Out( a ); }, in );
 }
 
 template< typename Out, typename In >
 vector< Out > vconvert_reverse( vector< In > in ) {
-  vector< Out > o = map< vector< Out > >( []( auto a ) { return Out( a ); }, in );
+  vector< Out > o = map_replace< vector< Out > >( []( auto a )
+                                                  { return Out( a ); },
+                                                  in );
   reverse( o.begin(), o.end() );
   return o;
 }

@@ -9,8 +9,9 @@
 //--------------------------------------------------
 //--------------------Tokens------------------------
 unordered_set< string > keywords =
-{ "forall", "exists", "int", "real", "bool", "true", "false", "and", "or", "imply",
-  "equiv", "not", "par", "in", "out", "tid", "initial", "final", "error", "havoc" };
+{ "forall", "exists", "int", "real", "bool", "true", "false", "and", "or",
+  "imply", "equiv", "not", "par", "in", "out", "tid", "initial", "final",
+  "error", "havoc", "string", "formula" };
 auto const forall_tok = tokenise( accept_str( "forall" ) );
 auto const exists_tok = tokenise( accept_str( "exists" ) );
 
@@ -30,7 +31,13 @@ auto const decimal_tok =
 
 auto const true_tok = tokenise( accept_str( "true" ) );
 auto const false_tok = tokenise( accept_str( "false" ) );
-auto const boolean_tok = tokenise( accept_str( "false" ) || accept_str( "true" ) );
+auto const boolean_tok = tokenise( accept_str( "false" )
+                                || accept_str( "true" ) );
+
+auto const string_tok = tokenise( accept_str( "string" ) );
+auto const formula_tok = tokenise( accept_str( "formula" ) );
+auto const astring_tok = tokenise( some( accept( is_any ) ) );
+auto const at_tok = tokenise( accept( is_char( '@' ) ) );
 
 auto const idn_tok =
    reject_strs( keywords )
@@ -44,6 +51,8 @@ auto const or_tok =    tokenise( accept_str( "or" ) ||    accept_str( "||" ) );
 auto const imply_tok = tokenise( accept_str( "imply" ) || accept_str( "->" ) );
 auto const equiv_tok = tokenise( accept_str( "equiv" ) || accept_str( "<->" ) );
 auto const not_tok =   tokenise( accept_str( "not" ) ||   accept_str( "!" ) );
+
+auto const arrow_tok = tokenise( accept_str( "->" ) );
 
 auto const round_left_tok = tokenise( accept( is_char( '(' ) ) );
 auto const round_right_tok = tokenise( accept( is_char( ')' ) ) );
@@ -66,6 +75,7 @@ auto const tid_tok = tokenise( accept_str( "tid" ) );
 auto const not_tid_tok = tokenise( reject_str( "tid" ) );
 
 auto const initial_tok = tokenise( accept_str( "initial" ) );
+auto const states_tok = tokenise( accept_str( "states" ) );
 auto const final_tok = tokenise( accept_str( "final" ) );
 auto const error_tok = tokenise( accept_str( "error" ) );
 auto const havoc_tok = tokenise( accept_str( "havoc" ) );
@@ -93,11 +103,11 @@ auto const gt_tok =    tokenise( accept( is_char( '>' ) ) );
 template<>
 const handle< type > parser< type > =
    attempt( caller< type >( "type:int",
-                            int_tok ) )
+              int_tok ) )
 || attempt( caller< type >( "type:real",
-                            real_tok ) )
+              real_tok ) )
 ||          caller< type >( "type:boolean",
-                            bool_tok );
+              bool_tok );
 //-------------------------------------------------
 
 //-------------------------------------------------
@@ -108,7 +118,7 @@ const handle< type > parser< type > =
 template<>
 const handle< numeral > parser< numeral > =
             caller< numeral >( "numeral",
-                               numeral_tok );
+              numeral_tok );
 //-------------------------------------------------
 
 //-------------------------------------------------
@@ -119,7 +129,7 @@ const handle< numeral > parser< numeral > =
 template<>
 const handle< decimal > parser< decimal > =
             caller< decimal >( "decimal",
-                               decimal_tok );
+              decimal_tok );
 //-------------------------------------------------
 
 //-------------------------------------------------
@@ -130,7 +140,7 @@ const handle< decimal > parser< decimal > =
 template<>
 const handle< boolean > parser< boolean > =
             caller< boolean >( "boolean",
-                               boolean_tok );
+              boolean_tok );
 //-------------------------------------------------
 
 //-------------------------------------------------
@@ -141,7 +151,7 @@ const handle< boolean > parser< boolean > =
 template<>
 const handle< idn > parser< idn > =
             caller< idn >( "idn",
-                           idn_tok );
+              idn_tok );
 //-------------------------------------------------
 
 //-------------------------------------------------
@@ -152,7 +162,7 @@ const handle< idn > parser< idn > =
 template<>
 const handle< idp > parser< idp > =
             caller< idp >( "idp",
-                           idp_tok );
+              idp_tok );
 //-------------------------------------------------
 
 //-------------------------------------------------
@@ -164,7 +174,7 @@ const handle< idp > parser< idp > =
 template<>
 const handle< id > parser< id > =
    attempt( caller< id >( "id:idp",
-                          reference( "idp", parser< idp > ) ) )
+              reference( "idp", parser< idp > ) ) )
 ||          caller< id >( "id:idn",
-                          reference( "idn", parser< idn > ) );
+              reference( "idn", parser< idn > ) );
 //-------------------------------------------------

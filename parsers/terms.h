@@ -11,13 +11,13 @@
 template<>
 const handle< bop > parser< bop > =
    attempt( caller< bop >( "bop:equiv",
-                           equiv_tok ) )
+              equiv_tok ) )
 || attempt( caller< bop >( "bop:imply",
-                           imply_tok ) )
+              imply_tok ) )
 || attempt( caller< bop >( "bop:or",
-                           or_tok ) )
+              or_tok ) )
 ||          caller< bop >( "bop:and",
-                           and_tok );
+              and_tok );
 //--------------------------------------------------
 
 //--------------------------------------------------
@@ -30,11 +30,11 @@ const handle< bop > parser< bop > =
 template<>
 const handle< bool_lit > parser< bool_lit > =
    attempt( caller< bool_lit >( "bool-lit:true",
-                                true_tok ) )
+              true_tok ) )
 || attempt( caller< bool_lit >( "bool-lit:false",
-                                false_tok ) )
+              false_tok ) )
 ||          caller< bool_lit >( "bool-lit:id",
-                                reference( "id", parser< id > ) );
+              reference( "id", parser< id > ) );
 //-------------------------------------------------
 
 //-------------------------------------------------
@@ -48,27 +48,27 @@ const handle< bool_lit > parser< bool_lit > =
 template<>
 const handle< bool_term > parser< bool_term > =
    attempt( caller< bool_term >( "bool-term:lit-bop",
-                                 reference( "bool-lit", parser< bool_lit > ),
-                                 reference( "bop", parser< bop > ),
-                                 reference( "bool-term", parser< bool_term > ) ) )
+              reference( "bool-lit",  parser< bool_lit > ),
+              reference( "bop",       parser< bop > ),
+              reference( "bool-term", parser< bool_term > ) ) )
 || attempt( caller< bool_term >( "bool-term:not-bop",
-                                 not_tok,
-                                 reference( "bool-term", parser< bool_term > ),
-                                 reference( "bop", parser< bop > ),
-                                 reference( "bool-term", parser< bool_term > ) ) )
+              not_tok,
+              reference( "bool-term", parser< bool_term > ),
+              reference( "bop",       parser< bop > ),
+              reference( "bool-term", parser< bool_term > ) ) )
 || attempt( caller< bool_term >( "bool-term:not",
-                                 not_tok,
-                                 reference( "bool-term", parser< bool_term > ) ) )
+              not_tok,
+              reference( "bool-term", parser< bool_term > ) ) )
 || attempt( caller< bool_term >( "bool-term:par-bop",
-                                 round_left_tok,
-                                 reference( "bool-term", parser< bool_term > ),
-                                 round_right_tok,
-                                 reference( "bop", parser< bop > ),
-                                 reference( "bool-term", parser< bool_term > ) ) )
+              round_left_tok,
+              reference( "bool-term", parser< bool_term > ),
+              round_right_tok,
+              reference( "bop",       parser< bop > ),
+              reference( "bool-term", parser< bool_term > ) ) )
 || attempt( caller< bool_term >( "bool-term:par",
-                                 round_left_tok,
-                                 reference( "bool-term", parser< bool_term > ),
-                                 round_right_tok ) )
+              round_left_tok,
+              reference( "bool-term", parser< bool_term > ),
+              round_right_tok ) )
 ||          caller< bool_term >( "bool-term:lit",
-                                 reference( "bool-lit", parser< bool_lit > ) );
+              reference( "bool-lit",  parser< bool_lit > ) );
 //-------------------------------------------------

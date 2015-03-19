@@ -318,7 +318,7 @@ struct index_term : expression {
       return "";
     }
     
-    auto v = map< vector< string > >(
+    auto v = map_replace< vector< string > >(
       [&] (size_t e) { return deitemise< index_term >( e ).print(); }, flat,
       flat.begin() + 2, flat.end() );
     return get< idn >().print() +
@@ -338,7 +338,7 @@ struct array_read : expression {
   }
 
   string print() {
-    auto v = map< vector< string > >(
+    auto v = map_replace< vector< string > >(
       [&](size_t e) { return deitemise< index_term >( e ).print(); }, flat,
       flat.begin() + 1, flat.end() );
     return get< idn >( 0 ).print() +
@@ -427,10 +427,10 @@ struct arith_term : expression {
 //               | <arith-list> , <arith-term>
 struct arith_list : expression {
   arith_list( vref< arith_term > l ) :
-    expression( vconvert< size_t >( l ) ) {}
+    expression( vconvert_reverse< size_t >( l ) ) {}
 
   std::string print() {
-    auto v = map< vector< string > >(
+    auto v = map_replace< vector< string > >(
       [&]( size_t e ) { return deitemise< arith_term >( e ).print(); }, flat );
     return printer( v, vstr_t( v.size() - 1, ", " ) );
   }
@@ -449,7 +449,7 @@ struct arith_list_e : expression {
   std::string print() {
     if ( flat.empty() )
       return "";
-    auto v = map< vector< string > >(
+    auto v = map_replace< vector< string > >(
       [&]( size_t e ) { return deitemise< arith_term >( e ).print(); }, flat );
     return printer( v, vstr_t( v.size() - 1, ", " ) );
   }
@@ -472,10 +472,10 @@ struct multi : expression {
   std::string print() {
     if ( flat.empty() )
       return "";
-    auto v1 = map< vector< string > >(
+    auto v1 = map_replace< vector< string > >(
       [&]( size_t e ) { return deitemise< arith_term >( e ).print(); }, flat,
       flat.begin() + 1, flat.begin() + flat[ 0 ] + 1 );
-    auto v2 = map< vector< string > >(
+    auto v2 = map_replace< vector< string > >(
       [&]( size_t e ) { return deitemise < arith_term >( e ).print(); }, flat,
       flat.begin() + flat[ 0 ] + 1, flat.end() );
     std::string ret;
@@ -486,17 +486,7 @@ struct multi : expression {
 };
 //--------------------------------------------------
 
-//--------------------------------------------------
-//--------------------Array-write class-------------
-//<array-write> ::= <idp> <multi>
-struct array_write : expression {
-  array_write( eref< idp > i, eref< multi > m ) : expression( { i, m } ) {}
-
-  std::string print() {
-    return printer( extractor< idp, multi >( 0 ), { " " } );
-  }
-};
-//--------------------------------------------------
+using array_write = compilation< ' ', idp, multi >;
 
 //--------------------------------------------------
 //--------------------Rop class---------------------
@@ -518,12 +508,12 @@ struct rop : expression {
   
   std::string print() {
     switch( flat[ 0 ] ) {
-    case rop_equ : return " = ";
-    case rop_neq : return " != ";
-    case rop_leq : return " <= ";
-    case rop_ltn : return " < ";
-    case rop_geq : return " >= ";
-    case rop_gtn : return " > ";
+    case rop_equ : return "=";
+    case rop_neq : return "!=";
+    case rop_leq : return "<=";
+    case rop_ltn : return "<";
+    case rop_geq : return ">=";
+    case rop_gtn : return ">";
     default : assert( false ); return "";
     }
   }
@@ -541,7 +531,7 @@ struct idn_list : expression {
   }
 
   string print() {
-    auto v = map< vector< string > >(
+    auto v = map_replace< vector< string > >(
       [&]( size_t e ) { return deitemise< idn >( e ).print(); }, flat );
     return printer( v, vstr_t( v.size() - 1, ", " ) );
   }
@@ -560,7 +550,7 @@ struct idn_list_e : expression {
   std::string print() {
     if ( flat.empty() )
       return "";
-    auto v = map< vector< std::string > >(
+    auto v = map_replace< vector< std::string > >(
       [&]( size_t e ) { return deitemise< idn >( e ).print(); }, flat );
     return printer( v, vstr_t( v.size() - 1, ", " ) );
   }
@@ -578,7 +568,7 @@ struct havoc : expression {
   std::string print() {
     if ( flat.empty() )
       return "havoc()";
-    auto v = map< vector< std::string > >(
+    auto v = map_replace< vector< std::string > >(
       [&]( size_t e ) { return deitemise< idn >( e ).print(); }, flat );
     return printer( { "havoc ( ", " )" },
                     { printer( v, vstr_t( v.size() - 1, ", " ) ) } );

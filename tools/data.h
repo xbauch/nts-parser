@@ -124,7 +124,8 @@ struct expression : symbol {
 
   size_t _h() {
     auto p = jenkins::SpookyHash::Hash128( (void*)flat.data(),
-                                           sizeof( size_t ) * flat.size(), 0, 0 );
+                                           sizeof( size_t ) * flat.size(),
+                                           0, 0 );
     return p.first ^ p.second;
   }
 
@@ -154,9 +155,15 @@ struct expression : symbol {
 
   template< typename... Ts >
   string printer( const tuple< Ts... >& in, vstr_t snd ) {
-    return printer( for_each< string, Ts... >( [] (auto e) { return e.print(); },
-                                               in ),
+    return printer( for_each< string, Ts... >(
+                      [] (auto e) { return e.print(); }, in ),
                     snd );
+  }
+
+  template< typename... Ts >
+  string printer( vstr_t in, const tuple< Ts... >& snd ) {
+    return printer( in, for_each< string, Ts... >(
+                          [] (auto e) { return e.print(); }, snd ) );
   }
 
   template< typename FType, typename SType, typename... RType >
@@ -174,7 +181,16 @@ struct expression : symbol {
   tuple< Ts... > extractor( size_t fst = 1 ) {
     return extract< Ts... >( fst );
   }
+};
 
+template< char sep, typename... Ts >
+struct compilation : expression {
+  compilation( eref< Ts >... ts ) : expression( { ts... } ) {}
+
+  string print() {
+    return printer( extractor< Ts... >( 0 ), vstr_t( sizeof...( Ts ) - 1,
+                                                     string( 1, sep ) ) );
+  }
 };
 
 template< typename T >

@@ -1,5 +1,4 @@
-#include "Parser-Combinators/parser_combinators.hpp"
-#include "parsers/generals.h"
+#include "parsers/tokens.h"
 
 #pragma once
 
@@ -14,13 +13,13 @@
 template<>
 const handle< arith_lit >  parser< arith_lit > =
    attempt( caller< arith_lit >( "arith-lit:id",
-                                 reference( "id", parser< id > ) ) )
+              reference( "id",      parser< id > ) ) )
 || attempt( caller< arith_lit >( "arith-lit:tid",
-                                 tid_tok ) )
+              tid_tok ) )
 || attempt( caller< arith_lit >( "arith-lit:dec",
-                                 reference( "decimal", parser< decimal > ) ) )
+              reference( "decimal", parser< decimal > ) ) )
 ||          caller< arith_lit >( "arith-lit:num",
-                                 reference( "numeral", parser< numeral > ) );
+              reference( "numeral", parser< numeral > ) );
 //-------------------------------------------------
 
 //-------------------------------------------------
@@ -31,23 +30,17 @@ const handle< arith_lit >  parser< arith_lit > =
 template<>
 const handle< aop > parser< aop > =
    attempt( caller< aop >( "aop:plus",
-                           plus_tok ) )
+              plus_tok ) )
 || attempt( caller< aop >( "aop:minus",
-                           minus_tok ) )
+              minus_tok ) )
 || attempt( caller< aop >( "aop:times",
-                           times_tok ) )
+              times_tok ) )
 || attempt( caller< aop >( "aop:div",
-                           div_tok ) )
+              div_tok ) )
 ||          caller< aop >( "aop:mod",
-                           mod_tok );
+              mod_tok );
 //------------------------------------------------
 
-//-------------------------------------------------
-//--------------------Index-term vector syntax-----
-// <v-index-term> ::= <index-term> ][ <v-index-term>
-//                  | <index-term>
-
-//----------Index-term vector parser------
 template<>
 const vhandle< index_term > vparser_sq< index_term > =
    attempt( conscaller< index_term >(
@@ -130,7 +123,7 @@ const vhandle< index_term > vparser_sq< index_term > =
               round_right_tok ) )
 ||          lastcaller< index_term >(
               "v-index-term:lit",
-              reference( "arith-lit", parser< arith_lit > ) );
+              reference( "arith-lit",   parser< arith_lit > ) );
 //-------------------------------------------------
 
 //-------------------------------------------------
@@ -145,7 +138,7 @@ const vhandle< index_term > vparser_sq< index_term > =
 template<>
 const handle< index_term > parser< index_term > =
   attempt( caller< index_term >( "index-term",
-                                 vparser_sq< index_term > ) );
+              vparser_sq< index_term > ) );
 //-------------------------------------------------
 
 //-------------------------------------------------
@@ -157,10 +150,10 @@ const handle< index_term > parser< index_term > =
 template<>
 const handle< array_read > parser< array_read > =
             caller< array_read >( "array-read",
-                                  reference( "idn", parser< idn > ),
-                                  square_left_tok,
-                                  reference( "index-terms", vparser_sq< index_term > ),
-                                  square_right_tok );
+              reference( "idn",        parser< idn > ),
+              square_left_tok,
+              reference( "index-terms", vparser_sq< index_term > ),
+              square_right_tok );
 //-------------------------------------------------
 
 //-------------------------------------------------
@@ -172,11 +165,11 @@ const handle< array_read > parser< array_read > =
 template<>
 const handle< array_term > parser< array_term > =
    attempt( caller< array_term >( "array-term:read",
-                                  reference( "array-read", parser< array_read > ) ) )
+              reference( "array-read", parser< array_read > ) ) )
 ||          caller< array_term >( "array-term:size",
-                                  bar_tok,
-                                  reference( "idn", parser< idn > ),
-                                  bar_tok );
+              bar_tok,
+              reference( "idn",        parser< idn > ),
+              bar_tok );
 //-------------------------------------------------
 
 //-------------------------------------------------
@@ -187,9 +180,9 @@ const handle< array_term > parser< array_term > =
 template<>
 const handle< sign > parser< sign > =
    attempt( caller< sign >( "sign:true",
-                            minus_tok ) )
+              minus_tok ) )
 ||          caller< sign >( "sign:false",
-                            empty_tok );
+              empty_tok );
 //-------------------------------------------------
 
 //-------------------------------------------------
@@ -203,50 +196,43 @@ const handle< sign > parser< sign > =
 template<>
 const handle< arith_term > parser< arith_term > =
    attempt( caller< arith_term >( "arith-term:par-aop",
-                                  round_left_tok,
-                                  reference( "arith-term", parser< arith_term > ),
-                                  round_right_tok,
-                                  reference( "aop",        parser< aop > ),
-                                  reference( "arith-term", parser< arith_term > ) ) )
+              round_left_tok,
+              reference( "arith-term", parser< arith_term > ),
+              round_right_tok,
+              reference( "aop",        parser< aop > ),
+              reference( "arith-term", parser< arith_term > ) ) )
 || attempt( caller< arith_term >( "arith-term:par",
-                                  round_left_tok,
-                                  reference( "arith-term", parser< arith_term > ),
-                                  round_right_tok ) )
+              round_left_tok,
+              reference( "arith-term", parser< arith_term > ),
+              round_right_tok ) )
 || attempt( caller< arith_term >( "arith-term:lit-aop",
-                                  reference( "sign", parser< sign > ),
-                                  reference( "arith-lit", parser< arith_lit > ),
-                                  reference( "aop", parser< aop > ),
-                                  reference( "arith-term", parser< arith_term > ) ) )
+              reference( "sign",       parser< sign > ),
+              reference( "arith-lit",  parser< arith_lit > ),
+              reference( "aop",        parser< aop > ),
+              reference( "arith-term", parser< arith_term > ) ) )
 || attempt( caller< arith_term >( "arith-term:arr-aop",
-                                  reference( "sign", parser< sign > ),
-                                  reference( "array-term", parser< array_term > ),
-                                  reference( "aop", parser< aop > ),
-                                  reference( "arith-term", parser< arith_term > ) ) )
+              reference( "sign",       parser< sign > ),
+              reference( "array-term", parser< array_term > ),
+              reference( "aop",        parser< aop > ),
+              reference( "arith-term", parser< arith_term > ) ) )
 || attempt( caller< arith_term >( "arith-term:arr",
-                                  reference( "sign", parser< sign > ),
-                                  reference( "array-term", parser< array_term > ) ) )
+              reference( "sign",       parser< sign > ),
+              reference( "array-term", parser< array_term > ) ) )
 ||          caller< arith_term >( "arith-term:lit",
-                                  reference( "sign", parser< sign > ),
-                                  reference( "arith-lit", parser< arith_lit > ) );
+              reference( "sign",       parser< sign > ),
+              reference( "arith-lit",  parser< arith_lit > ) );
 //-------------------------------------------------
 
-//-------------------------------------------------
-//--------------------Arith-term vector syntax-----
-//<v-arith-term> ::= <arith-term> , <v-arith-term>
-//                 | <arith-term>
-
-//----------Arith-term vector parser------
 template<>
 const vhandle< arith_term > vparser_cm< arith_term > =
    attempt( conscaller< arith_term >(
               "arith-terms:cons",
               comma_tok,
               reference( "v-arith-term", vparser_cm< arith_term > ),
-              reference( "arith-term", parser< arith_term > ) ) )
+              reference( "arith-term",   parser< arith_term > ) ) )
 ||          lastcaller< arith_term >(
               "arith-term:last",
-              reference( "arith-term", parser< arith_term > ) );
-//-------------------------------------------------
+              reference( "arith-term",   parser< arith_term > ) );
 
 //-------------------------------------------------
 //--------------------Arith-list syntax------------
@@ -257,7 +243,7 @@ const vhandle< arith_term > vparser_cm< arith_term > =
 template<>
 const handle< arith_list > parser< arith_list > =
   caller< arith_list >( "arith-list",
-                        reference( "arith_terms", vparser_cm< arith_term > ) );
+              reference( "arith_terms", vparser_cm< arith_term > ) );
 //-------------------------------------------------
 
 //-------------------------------------------------
@@ -276,23 +262,16 @@ const handle< arith_list_e > parser< arith_list_e > =
               empty_tok );
 //-------------------------------------------------
 
-//-------------------------------------------------
-//--------------------Arith-term vector syntax-----
-// <v-arith-term> ::= <arith-term> ][ <v-arith-term>
-//                  | <arith-term>
-
-//----------Arith-term vector parser------
 template<>
 const vhandle< arith_term > vparser_sq< arith_term > =
    attempt( conscaller< arith_term >(
               "arith-terms:cons",
               square_right_left_tok,
               reference( "arith-terms", vparser_sq< arith_term > ),
-              reference( "arith-term", parser< arith_term > ) ) )
+              reference( "arith-term",  parser< arith_term > ) ) )
 ||          lastcaller< arith_term >(
               "arith-terms:last",
-              reference( "arith-term", parser< arith_term > ) );
-//-------------------------------------------------
+              reference( "arith-term",  parser< arith_term > ) );
 
 //-------------------------------------------------
 //--------------------Multi syntax-----------------
@@ -304,17 +283,17 @@ const vhandle< arith_term > vparser_sq< arith_term > =
 template<>
 const handle< multi > parser< multi > =
    attempt( caller< multi >( "multi:non-non-empty",
-                             square_left_tok,
-                             reference( "arith_terms", vparser_sq< arith_term > ),
-                             comma_tok,
-                             reference( "arith_terms", vparser_cm< arith_term > ),
-                             square_right_tok ) )
+              square_left_tok,
+              reference( "arith_terms", vparser_sq< arith_term > ),
+              comma_tok,
+              reference( "arith_terms", vparser_cm< arith_term > ),
+              square_right_tok ) )
 || attempt( caller< multi >( "multi:non-empty",
-                             square_left_tok,
-                             reference( "arith_terms", vparser_cm< arith_term > ),
-                             square_right_tok ) )
+              square_left_tok,
+              reference( "arith_terms", vparser_cm< arith_term > ),
+              square_right_tok ) )
 ||          caller< multi >( "multi:empty",
-                             empty_tok );
+              empty_tok );
 //-------------------------------------------------
 
 //-------------------------------------------------
@@ -325,6 +304,6 @@ const handle< multi > parser< multi > =
 template<>
 const handle< array_write > parser< array_write > =
             caller< array_write >( "array-write",
-                                   reference( "idp", parser< idp > ),
-                                   reference( "multi", parser< multi > ) );
+              reference( "idp",   parser< idp > ),
+              reference( "multi", parser< multi > ) );
 //-------------------------------------------------

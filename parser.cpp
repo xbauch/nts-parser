@@ -4,14 +4,16 @@
 
 #include "tools/data.h"
 #include "tools/logic.h"
-#include "parsers/formulae.h"
+#include "parsers/basics.h"
 
 using namespace std;
 
 template< typename T >
 eref< T > parse( char* file ) {
   stream_range in( file ); 
-  auto const q_parser = first_token && parser< T > && is_last;
+  auto const q_parser = first_token
+                     && parser< T >
+                     && is_last;
   eref< T > q {};
   typename stream_range::iterator i = in.first;
   if ( q_parser( i, in, &q ) )
@@ -27,6 +29,6 @@ int main( int argc, char** argv ) {
     return 1;
   }
 
-  cout << deitemise( parse< formula >( argv[ 1 ] ) ).print() << "foo" << endl;
+  cout << deitemise( parse< nts_basic >( argv[ 1 ] ) ).print() << "foo" << endl;
   return 0;
 }
