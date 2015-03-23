@@ -1,5 +1,4 @@
-#include "Parser-Combinators/parser_combinators.hpp"
-#include "parsers/generals.h"
+#include "parsers/terms.h"
 
 #pragma once
 
@@ -78,10 +77,38 @@ const handle< havoc > parser< havoc > =
 //-------------------------------------------------
 
 //-------------------------------------------------
+//--------------------Assignment syntax------------
+//<assignment> ::= <idp> <rop> <arith-term>
+//               | <idp> <multi> <rop> [ <arith-list> ]
+//               | <idp> <multi> <rop> <arith-term>
+
+//----------Assignment parser-------------
+template<>
+handle< assignment > const parser< assignment > =
+   attempt( caller< assignment >( "assignment:idp",
+              reference( "idp",  parser< idp > ),
+              reference( "rop",  parser< rop > ),
+              reference( "arith-term",  parser< arith_term > ) ) )
+|| attempt( caller< assignment >( "assignment:array-array",
+              reference( "idp",  parser< idp > ),
+              reference( "multi",  parser< multi > ),
+              reference( "rop",  parser< rop > ),
+              square_left_tok,
+              reference( "arith-list",  parser< arith_list > ),
+              square_right_tok ) )
+||          caller< assignment >( "assignment:array-term",
+              reference( "idp",  parser< idp > ),
+              reference( "multi",  parser< multi > ),
+              reference( "rop",  parser< rop > ),
+              reference( "arith-term",  parser< arith_term > ) );
+//-------------------------------------------------
+//-------------------------------------------------
+
+//-------------------------------------------------
 //--------------------Atom syntax------------------
 //<atom> ::= <bool-term>
+//         | <assignment>
 //         | <arith-term> <rop> <arith-term>
-//         | <array-write> = [ <arith-list> ]
 //         | <havoc>
 
 //----------Atom parser-------------------
@@ -91,12 +118,8 @@ handle< atom > const parser< atom > =
               reference( "arith-term",  parser< arith_term > ),
               reference( "rop",         parser< rop > ),
               reference( "arith-term",  parser< arith_term > ) ) )
-|| attempt( caller< atom >( "atom:array",
-              reference( "array-write", parser< array_write > ),
-              equal_tok,
-              square_left_tok,
-              reference( "arith-list",  parser< arith_list > ),
-              square_right_tok ) )
+|| attempt( caller< atom >( "atom:assignment",
+              reference( "assignment", parser< assignment > ) ) )
 || attempt( caller< atom >( "atom:havoc",
               reference( "havoc",       parser< havoc > ) ) )
 ||          caller< atom >( "atom:bool-term",

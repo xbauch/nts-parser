@@ -1,0 +1,17 @@
+nts concatenation;
+
+init true;
+instances concat[1];
+    
+concat {
+  in a1[], a2[] : int;
+  out a[] : int;
+  t[|a1|+|a2|] : int, i : int;
+  initial si;
+  final sf;
+  si -> s1 { i'=0 and havoc(i) }
+  s1 -> s1 { i<|a1| and t'[i]=a1[i] and i'=i+1 and havoc(t,i) }
+  s1 -> s2 { i=|a1| and i'=0 and havoc(i) }
+  s2 -> s2 { i<|a2| and t'[i+|a1|]=a2[i] and i'=i+1 and havoc(t,i) }
+  s2 -> sf { i=|a2| and a'=t and havoc(a) }
+}

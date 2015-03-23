@@ -130,106 +130,18 @@ struct id : expression {
 //--------------------------------------------------
 
 //--------------------------------------------------
-//--------------------Bop class---------------------
-//<bop> ::= {and,or,imply,equiv,&&,||,->,<->}
-struct bop : expression {
-  enum kind { band, bor, imply, equiv };
-
-  bop( string s ) : expression( { kinder( s ) } ) {}
-
-  kind kinder( string s ) {
-    switch( s[ 0 ] ) {
-    case 'a' : case '&' : return band;
-    case 'o' : case '|' : return bor;
-    case 'i' : case '-' : return imply;
-    case 'e' : case '<' : return equiv;
-    default : assert( false ); return band;
-    }
-  }
-
-  std::string print() {
-    switch( flat[ 0 ] ) {
-    case band : return "/\\";
-    case bor : return "\\/";
-    case imply : return "->";
-    case equiv : return "<->";
-    default : assert( false ); return "";
-    }
-  }
-};
-//--------------------------------------------------
-
-//--------------------------------------------------
-//--------------------Bool-lit class----------------
-//<bool-lit> ::= <id>
-//             | true
-//             | false
-struct bool_lit : expression {
-  enum kind { bl_id, bl_true, bl_false };
-
-  bool_lit( eref< id > i ) : expression( { bl_id, i } ) {}
-  bool_lit( string s ) : expression( { (s[0] == 't' ? bl_true : bl_false) } ) {}
-
-  std::string print() {
-    switch( flat[ 0 ] ) {
-    case bl_id : return get< id >().print();
-    case bl_true : return "true";
-    case bl_false : return "false";
-    default : assert( false ); return "";
-    }
-  }
-};
-//--------------------------------------------------
-
-//--------------------------------------------------
-//--------------------Bool-term class---------------
-//<bool-term> ::= <bool-lit>
-//              | ( <bool-term> )
-//              | <not> <bool-term>
-//              | <bool-term> <bop> <bool-term>
-struct bool_term : expression {
-  enum kind { literal, parenthesised, negated, relation };
-
-  bool_term( eref< bool_lit > l ) : expression( { literal, l } ) {}
-  bool_term( string, eref< bool_term > t, string ) :
-    expression( { parenthesised, t } ) {}
-  bool_term( string, eref< bool_term > t ) :
-    expression( { negated, t } ) {}
-  
-  bool_term( eref< bool_lit > l, eref< bop > o, eref< bool_term > r ) :
-    expression( { relation, itemise< bool_term >( bool_term( l ) ), o, r } ) {}
-  bool_term( string lp, eref< bool_term > l, string rp, eref< bop > o,
-             eref< bool_term > r ) :
-    expression( { relation, itemise< bool_term >( bool_term( lp, l, rp ) ), o, r } ) {}
-  bool_term( string n, eref< bool_term > l, eref< bop > o, eref< bool_term > r ) :
-    expression( { relation, itemise< bool_term >( bool_term( n, l ) ), o, r } ) {}
-
-  string print() {
-    switch( flat[ 0 ] ) {
-    case literal : return get< bool_lit >().print();
-    case parenthesised : return printer( { "(", ")" },
-                                         { get< bool_term >().print() } );
-    case negated : return "~" + get< bool_term >().print();
-    case relation : return printer( extractor< bool_term, bop, bool_term >(),
-                                    { " ", " " } );
-    default : assert( false ); return "";
-    }
-  }
-};
-//--------------------------------------------------
-
-//--------------------------------------------------
 //--------------------Arith-lit class---------------
 //<arith-lit> ::= <id>
 //              | tid
 //              | <numeral>
 //              | <decimal>
 struct arith_lit : expression {
-  enum kind { arith_id, arith_tid, arith_num, arith_dec };
+  enum kind { arith_id, arith_tid, arith_num, arith_dec, arith_bool };
 
   arith_lit( eref< id > i ) :      expression( { arith_id, i } ) {}
   arith_lit( string ) :            expression( { arith_tid } ) {}
   arith_lit( eref< numeral > n ) : expression( { arith_num, n } ) {}
+  arith_lit( eref< boolean > b ) : expression( { arith_bool, b } ) {}
   arith_lit( eref< decimal > d ) : expression( { arith_dec, d } ) {}
 
   std::string print() {
@@ -237,6 +149,7 @@ struct arith_lit : expression {
     case arith_id : return get< id >().print();
     case arith_tid : return "tid";
     case arith_num : return get< numeral >().print();
+    case arith_bool : return get< boolean >().print();
     case arith_dec : return get< decimal >().print();
     default : assert( false ); return "";
     }
@@ -458,16 +371,19 @@ struct arith_list_e : expression {
 
 //--------------------------------------------------
 //--------------------Multi class-------------------
-//<multi> ::= [ <arith-term> ] <multi> |
-//            [ <arith-list> ] |
-//            \epsilon
+//<multi> ::= [ <arith-term> ] <multi>
+//          | [ <arith-list> ]
+//          | arith_term
+//          | epsilon
 struct multi : expression {
-  multi( string ) : expression( vsize_t() ) {}
+  multi( string ) :
+    expression( vsize_t() ) {}
   multi( string, vref< arith_term > a, string, vref< arith_term > l, string ) :
     expression( cat( { a.size() - 1 }, vconvert< size_t >( a ),
                      vconvert< size_t >( l ) ) ) { assert( !l.empty() ); }
-  multi( string, vref< arith_term > l, string ) : expression(
-    cat( { size_t( 0 ) }, vconvert< size_t >( l ) ) ) { assert( !l.empty() ); }
+  multi( string, vref< arith_term > l, string ) :
+    expression( cat( { size_t( 0 ) },
+                     vconvert< size_t >( l ) ) ) { assert( !l.empty() ); }
 
   std::string print() {
     if ( flat.empty() )
@@ -486,7 +402,98 @@ struct multi : expression {
 };
 //--------------------------------------------------
 
-using array_write = compilation< ' ', idp, multi >;
+//using array_write = compilation< ' ', idp, multi >;
+
+//--------------------------------------------------
+//--------------------Bop class---------------------
+//<bop> ::= {and,or,imply,equiv,&&,||,->,<->}
+struct bop : expression {
+  enum kind { band, bor, imply, equiv };
+
+  bop( string s ) : expression( { kinder( s ) } ) {}
+
+  kind kinder( string s ) {
+    switch( s[ 0 ] ) {
+    case 'a' : case '&' : return band;
+    case 'o' : case '|' : return bor;
+    case 'i' : case '-' : return imply;
+    case 'e' : case '<' : return equiv;
+    default : assert( false ); return band;
+    }
+  }
+
+  std::string print() {
+    switch( flat[ 0 ] ) {
+    case band : return "/\\";
+    case bor : return "\\/";
+    case imply : return "->";
+    case equiv : return "<->";
+    default : assert( false ); return "";
+    }
+  }
+};
+//--------------------------------------------------
+
+//--------------------------------------------------
+//--------------------Bool-lit class----------------
+//<bool-lit> ::= <id>
+//             | true
+//             | false
+struct bool_lit : expression {
+  enum kind { bl_id, bl_array, bl_true, bl_false };
+
+  bool_lit( eref< id > i ) : expression( { bl_id, i } ) {}
+  bool_lit( eref< array_read > a ) : expression( { bl_array, a } ) {}
+  bool_lit( string s ) : expression( { (s[0] == 't' ? bl_true : bl_false) } ) {}
+
+  std::string print() {
+    switch( flat[ 0 ] ) {
+    case bl_id : return get< id >().print();
+    case bl_array : return get< array_read >().print();
+    case bl_true : return "true";
+    case bl_false : return "false";
+    default : assert( false ); return "";
+    }
+  }
+};
+//--------------------------------------------------
+
+//--------------------------------------------------
+//--------------------Bool-term class---------------
+//<bool-term> ::= <bool-lit>
+//              | ( <bool-term> )
+//              | <not> <bool-term>
+//              | <bool-term> <bop> <bool-term>
+struct bool_term : expression {
+  enum kind { literal, parenthesised, negated, relation };
+
+  bool_term( eref< bool_lit > l ) : expression( { literal, l } ) {}
+  bool_term( string, eref< bool_term > t, string ) :
+    expression( { parenthesised, t } ) {}
+  bool_term( string, eref< bool_term > t ) :
+    expression( { negated, t } ) {}
+  
+  bool_term( eref< bool_lit > l, eref< bop > o, eref< bool_term > r ) :
+    expression( { relation, itemise< bool_term >( bool_term( l ) ), o, r } ) {}
+  bool_term( string lp, eref< bool_term > l, string rp, eref< bop > o,
+             eref< bool_term > r ) :
+    expression( { relation, itemise< bool_term >( bool_term( lp, l, rp ) ), o, r } ) {}
+  bool_term( string n, eref< bool_term > l, eref< bop > o, eref< bool_term > r ) :
+    expression( { relation, itemise< bool_term >( bool_term( n, l ) ), o, r } ) {}
+
+  string print() {
+    switch( flat[ 0 ] ) {
+    case literal : return get< bool_lit >().print();
+    case parenthesised : return printer( { "(", ")" },
+                                         { get< bool_term >().print() } );
+    case negated : return "~" + get< bool_term >().print();
+    case relation : return printer( extractor< bool_term, bop, bool_term >(),
+                                    { " ", " " } );
+    default : assert( false ); return "";
+    }
+  }
+};
+//--------------------------------------------------
 
 //--------------------------------------------------
 //--------------------Rop class---------------------
@@ -577,19 +584,51 @@ struct havoc : expression {
 //--------------------------------------------------
 
 //--------------------------------------------------
+//--------------------Assignment class--------------
+//<assignment> ::= <idp> <rop> <arith-term>
+//               | <idp> <multi> <rop> [ <arith-list> ]
+//               | <idp> <multi> <rop> <arith-term>
+struct assignment : expression {
+  enum kind { as_idp, as_arr_arr, as_arr_ter };
+
+  assignment( eref< idp > i, eref< rop > o, eref< arith_term > t ) :
+    expression( { as_idp, i, o, t } ) {}
+  assignment( eref< idp > i, eref< multi > m, eref< rop > o, string&,
+              eref< arith_list > l, string& ) :
+    expression( { as_idp, i, m, o, l } ) {}
+  assignment( eref< idp > i, eref< multi > m, eref< rop > o,
+              eref< arith_term > t ) :
+    expression( { as_idp, i, m, o, t } ) {}
+
+  std::string print() {
+    switch ( flat[ 0 ] ) {
+    case as_idp : return printer( extractor< idp, rop, arith_term >(),
+                                  { " ", " " } );
+    case as_arr_arr : return printer( extractor< idp, multi, rop, arith_list >(),
+                                      { "", " ", "[", "]" } );
+    case as_arr_ter : return printer( extractor< idp, multi, rop, arith_term >(),
+                                      { "", " ", " " } );
+    default : assert( false ); return "";
+    }
+  }
+};
+//--------------------------------------------------
+
+//--------------------------------------------------
 //--------------------Atom class--------------------
 //<atom> ::= <bool-term>
+//         | <assignment>
 //         | <arith-term> <rop> <arith-term>
-//         | <array-write> = [ <arith-list> ]
 //         | <havoc>
 struct atom : expression {
-  enum kind { boolean_term, relation, array_equality, havoced };
+  enum kind { boolean_term, relation, assign, havoced };
 
-  atom( eref< bool_term > b ) : expression( { boolean_term, b } ) {}
+  atom( eref< bool_term > b ) :
+    expression( { boolean_term, b } ) {}
   atom( eref< arith_term > l, eref< rop > o, eref< arith_term > r ) :
     expression( { relation, l, o, r } ) {}
-  atom( eref< array_write > a, string, string, eref< arith_list > l, string ) :
-    expression( { array_equality, a, l } ) {}
+  atom( eref< assignment > a ) :
+    expression( { assign, a } ) {}
   atom( eref< havoc > h ) : expression( { havoced, h } ) {}
 
   std::string print() {
@@ -597,8 +636,7 @@ struct atom : expression {
     case boolean_term : return get< bool_term >().print();
     case relation : return printer( extractor< arith_term, rop, arith_term >(),
                                     { " ", " " } );
-    case array_equality : return printer( extractor< array_write, arith_list >(),
-                                          { " = [", "]" } );
+    case assign : return get< assignment >().print();
     case havoced : return get< havoc >().print();
     default : assert( false ); return "";
     }
@@ -668,9 +706,12 @@ struct formula : expression {
                   itemise< formula >( formula( q, i, c, t, d, l ) ),
                   b, r } ) {}
   
-  formula( eref< atom > a ) : expression( { atomic, a } ) {}
-  formula( string&, eref< formula > f, string& ) : expression( { parenthesised, f } ) {}
-  formula( string&, eref< formula > f ) : expression( { negated, f } ) {}
+  formula( eref< atom > a ) :
+    expression( { atomic, a } ) {}
+  formula( string&, eref< formula > f, string& ) :
+    expression( { parenthesised, f } ) {}
+  formula( string&, eref< formula > f ) :
+    expression( { negated, f } ) {}
   formula( eref< quantifier > q, eref< idn_list > l, string&, eref< q_type > t,
            string&, eref< formula > f ) :
     expression( { quantified, q, l, t, f } ) {}
@@ -682,6 +723,8 @@ struct formula : expression {
       return printer( { "(", ")" }, { get< formula >().print() } );
     case boolean :
       return printer( extractor< formula, bop, formula >(), { " ", " " } );
+    case negated :
+      return "~" + get< formula >().print();
     case quantified :
       return printer( extractor< quantifier, idn_list, q_type, formula >(),
                       { " ", " : ", " . " } );

@@ -1,0 +1,65 @@
+nts bakery;
+
+//global declarations
+par N : int;
+choose[N] : int;
+num[N] : int;
+CS[N] : bool;
+
+//initial condition on global variables
+init  forall i : int[0,N-1] . (choose[i]=0 and
+      num[i]=0 and not CS[i]) and N>0;
+
+//note that the order of entry point dtermines their tids:
+//tid of bakery threads will be in range [0..N-1] and
+//tid of the monitor thread will be N
+instances bakery[N], monitor[i];
+
+//bakery threads
+bakery {
+  initial s1;
+  s1 -> s2 { lock(tid) }
+  s2 -> s1 { unlock(tid) }
+}
+//monitor thread
+monitor {
+  initial si;
+  error se;
+  si -> se { exists i,j :  int[0,N-1] . (i!=j and
+             CS[i] and CS[j]) and havoc() }
+}
+lock {
+  in i :  int;
+  max : int, j : int;
+  initial s1;
+  final s5;
+
+  //set max
+  s1 -> s2 { choose'[i] = 1 and max'=0 and j'=0
+             and havoc(max,choose,j) }
+  s2 -> s2 { j<N and max >= num[j] and j'=j+1
+             and havoc(j) }
+  s2 -> s2 { j<N and max < num[j] and max'=num[j] and j'=j+1
+             and havoc(max,j) }
+  s2 -> s3 { j=N and choose'[i] = 0 and j'=0
+             and havoc(choose,j) }
+
+  //wait for entering the critical section
+  s3 -> s3 { j<N and choose[j] != 0 and havoc() }
+  s3 -> s4 { j<N and choose[j] = 0 and havoc() }
+  s4 -> s4 { num[j]!=0 and (num[j]<num[i] or
+             num[j]=num[j] and j<i) and havoc() }
+  s4 -> s3 { not (num[j]!=0 and (num[j]<num[i] or
+             num[j]=num[i] and j<i)) and j'=j+1 and havoc(j) }
+
+  //enter the critical section
+  s3 -> s5 { j=N and CS'[i]=true and havoc(CS) }
+}
+unlock {
+  in i : int;
+  initial s1;
+  final s2;
+  //leave the critical section
+  s1 -> s2  { CS'[i]=false and num'[i]=0 and havoc(CS,num) }
+} 
+

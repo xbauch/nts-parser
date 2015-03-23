@@ -1,8 +1,23 @@
+#include <unordered_set>
+
 #include "Parser-Combinators/stream_iterator.hpp"
+#include "Parser-Combinators/parser_combinators.hpp"
 #include "tools/logic.h"
 #include "tools/system.h"
 
 #pragma once
+
+auto const comment_tok = tokenise( accept_str( "//" )
+                                && many( accept( is_print ) )
+                                && accept( is_eol ) );
+auto commented_first = discard( many( accept( is_space ) || comment_tok ) );
+template< typename R >
+auto tokenise_c( const R& r ) -> decltype( rename( r.ebnf(), 0,
+                                                   r && commented_first ) ) {
+  return rename( r.ebnf(), 0, r && commented_first );
+}
+  
+
 
 class reject_str {
   string const s;

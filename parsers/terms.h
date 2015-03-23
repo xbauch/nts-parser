@@ -1,5 +1,4 @@
-#include "Parser-Combinators/parser_combinators.hpp"
-#include "parsers/generals.h"
+#include "parsers/arithmetic.h"
 
 #pragma once
 
@@ -33,6 +32,8 @@ const handle< bool_lit > parser< bool_lit > =
               true_tok ) )
 || attempt( caller< bool_lit >( "bool-lit:false",
               false_tok ) )
+|| attempt( caller< bool_lit >( "bool-lit:array-read",
+              reference( "array_read", parser< array_read > ) ) )
 ||          caller< bool_lit >( "bool-lit:id",
               reference( "id", parser< id > ) );
 //-------------------------------------------------

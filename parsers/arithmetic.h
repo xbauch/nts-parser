@@ -18,6 +18,8 @@ const handle< arith_lit >  parser< arith_lit > =
               tid_tok ) )
 || attempt( caller< arith_lit >( "arith-lit:dec",
               reference( "decimal", parser< decimal > ) ) )
+|| attempt( caller< arith_lit >( "arith-lit:bool",
+              reference( "boolean", parser< boolean > ) ) )
 ||          caller< arith_lit >( "arith-lit:num",
               reference( "numeral", parser< numeral > ) );
 //-------------------------------------------------
@@ -150,7 +152,7 @@ const handle< index_term > parser< index_term > =
 template<>
 const handle< array_read > parser< array_read > =
             caller< array_read >( "array-read",
-              reference( "idn",        parser< idn > ),
+              reference( "idn",         parser< idn > ),
               square_left_tok,
               reference( "index-terms", vparser_sq< index_term > ),
               square_right_tok );
@@ -275,9 +277,9 @@ const vhandle< arith_term > vparser_sq< arith_term > =
 
 //-------------------------------------------------
 //--------------------Multi syntax-----------------
-//<multi> ::= [ <arith-term> ] <multi> |
-//            [ <arith-list> ] |
-//            epsilon
+//<multi> ::= [ <arith-term> ] <multi>
+//          | [ <arith-list> ]
+//          | epsilon
 
 //----------Multi parser------------------
 template<>
@@ -294,16 +296,4 @@ const handle< multi > parser< multi > =
               square_right_tok ) )
 ||          caller< multi >( "multi:empty",
               empty_tok );
-//-------------------------------------------------
-
-//-------------------------------------------------
-//--------------------Array-write syntax-----------
-//<array-write> ::= <idp> <multi>
-
-//----------Array-write parser------------
-template<>
-const handle< array_write > parser< array_write > =
-            caller< array_write >( "array-write",
-              reference( "idp",   parser< idp > ),
-              reference( "multi", parser< multi > ) );
 //-------------------------------------------------

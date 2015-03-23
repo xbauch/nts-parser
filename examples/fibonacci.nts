@@ -1,0 +1,26 @@
+nts fibonacci;
+
+init true;
+instances fib[1], main[1];
+    
+fib {
+  in x : int;
+  out y : int;
+  t1, t2 : int;
+  initial si;
+  final sf;
+  si -> sf { x=0 and y'=0 and havoc(y) }
+  si -> sf { x=1 and y'=1 and havoc(y) }
+  si -> s1 { x>1 and havoc() }
+  s1 -> s2 { t1'=fib(x-2) }
+  s2 -> s3 { t2'=fib(x-1) }
+  s3 -> sf { y'=t1+t2 and havoc(y) }
+}
+main {
+  x, y : int;
+  initial si;
+  error se;
+  si -> s1 { x>=0 and havoc() }
+  s2 -> s2 {y'=fib(x) }
+  s2 -> se { x>=4 and y<=x and havoc() }
+}

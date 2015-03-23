@@ -165,20 +165,29 @@ const handle< decl_par_lit > parser< decl_par_lit > =
               reference( "basic", parser< basic > ) );
 //--------------------------------------------------
 
+template<>
+const vhandle< decl_par_lit > vparser_cm< decl_par_lit > =
+   attempt( conscaller< decl_par_lit >( "decl-par-lit:cons",
+              comma_tok,
+              reference( "v-decl-par-lit", vparser_cm< decl_par_lit > ),
+              reference( "decl-par-lit",   parser< decl_par_lit > ) ) )
+||          lastcaller< decl_par_lit >( "decl-par-lit:last",
+              reference( "decl-par-lit",   parser< decl_par_lit > ) );
+
 //--------------------------------------------------
 //--------------------Decl-par-lits syntax----------
-//<decl-par-lits> ::= <decl-par-lits> , <idn>
+//<decl-par-lits> ::= <decl-par-lits> , <decl-par-lit>
 //                  | <decl-par-lit>
 
 //----------Decl-par-lits parser----------
 template<>
 const handle< decl_par_lits > parser< decl_par_lits > =
    attempt( caller< decl_par_lits >( "decl-par-lits:non-empty",
-              reference( "decl-par-lit", parser< decl_par_lit > ),
+              reference( "decl-par-lit",  parser< decl_par_lit > ),
               comma_tok,
-              reference( "idns",         vparser_cm< idn > ) ) )
+              reference( "decl-par-lits", vparser_cm< decl_par_lit > ) ) )
 ||          caller< decl_par_lits >( "decl-par-lits:empty",
-              reference( "decl-par-lit", parser< decl_par_lit > ) );
+              reference( "decl-par-lit",  parser< decl_par_lit > ) );
 //--------------------------------------------------
 
 //--------------------------------------------------
@@ -231,6 +240,15 @@ const handle< decl_io_lit > parser< decl_io_lit > =
               reference( "basic",          parser< basic > ) );
 //--------------------------------------------------
 
+template<>
+const vhandle< decl_io_lit > vparser_cm< decl_io_lit > =
+   attempt( conscaller< decl_io_lit >( "decl-io-lit:cons",
+              comma_tok,
+              reference( "v-decl-io-lit", vparser_cm< decl_io_lit > ),
+              reference( "decl-io-lit",   parser< decl_io_lit > ) ) )
+||          lastcaller< decl_io_lit >( "decl-io-lit:last",
+              reference( "decl-io-lit",   parser< decl_io_lit > ) );
+
 //--------------------------------------------------
 //--------------------Decl-io-lits syntax-----------
 //<decl-io-lits> ::= <decl-io-lits> , <idn>
@@ -240,11 +258,11 @@ const handle< decl_io_lit > parser< decl_io_lit > =
 template<>
 const handle< decl_io_lits > parser< decl_io_lits > =
    attempt( caller< decl_io_lits >( "decl-io-lits:non-empty",
-              reference( "decl-io-lit", parser< decl_io_lit > ),
+              reference( "decl-io-lit",  parser< decl_io_lit > ),
               comma_tok,
-              reference( "idns",        vparser_cm< idn > ) ) )
+              reference( "decl-io-lits", vparser_cm< decl_io_lit > ) ) )
 ||          caller< decl_io_lits >( "decl-io-lits:empty",
-              reference( "decl-io-lit", parser< decl_io_lit > ) );
+              reference( "decl-io-lit",  parser< decl_io_lit > ) );
 //--------------------------------------------------
 
 //--------------------------------------------------
@@ -357,13 +375,19 @@ const handle< out > parser< out > =
 //--------------------------------------------------
 //--------------------Decl-loc syntax---------------
 //<decl-loc> ::= <decl-loc> <decl>
-//              | <in> <out>
+//             | <in> <out>
+//             | epsilon 
 
 //----------Decl-loc parser--------------
 template<>
 const handle< decl_loc > parser< decl_loc > =
-            caller< decl_loc >( "decl-loc:non-empty",
+   attempt( caller< decl_loc >( "decl-loc:non-empty",
               reference( "in",          parser< in > ),
               reference( "out",         parser< out > ),
-              reference( "decl-vector", vparser_em< decl > ) );
+              reference( "decl-vector", vparser_em< decl > ) ) )
+|| attempt( caller< decl_loc >( "decl-loc:empty",
+              reference( "in",          parser< in > ),
+              reference( "out",         parser< out > ) ) )
+||      caller< decl_loc >( "decl-loc:emptier",
+              empty_tok );
 //--------------------------------------------------

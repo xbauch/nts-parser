@@ -1,0 +1,22 @@
+@inv:formula:  x=0 and x<=11; //annotation of global NTS
+nts annotated;
+@line:int:101; @col:int:5; // annotation of global variable x
+x :  int;
+init x=0;
+instances main[1];
+@inv:formula: x<=11; //subsystem annotation
+main {
+  @line:int:101; @col:int:15; // annotation of local variable y
+  y :  int;
+  states // partial declations of control states
+    @line:int:5; // annotation of the control states s1
+    s1
+  ;
+  initial s1;
+
+  final s2;
+  s1 -> s1 @line:int:105; @col:int:1; // annotation of a transition
+           { x<0 and x'=x+1 }
+  s1 -> s2 { x=0 and x'=x }
+  s2 -> s2 { x<=10 and x'=x+1 }
+}

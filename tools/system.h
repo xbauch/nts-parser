@@ -264,6 +264,7 @@ struct decl_blocks : expression {
 struct decl_par_lit : expression {
   enum kind { dpl_basic, dpl_array };
   
+  decl_par_lit( eref< decl_par_lit > b ) : expression( deitemise( b ).flat ) {}
   decl_par_lit( eref< basic > b ) : expression( { dpl_basic, b } ) {}
   decl_par_lit( eref< nts_array > a ) : expression( { dpl_array, a } ) {}
 
@@ -283,17 +284,16 @@ struct decl_par_lit : expression {
 struct decl_par_lits : expression {
   decl_par_lits( eref< decl_par_lit > l ) :
     expression( { l } ) {}
-  decl_par_lits( eref< decl_par_lit > l, string&, vref< idn > v ) :
+  decl_par_lits( eref< decl_par_lit > l, string&, vref< decl_par_lit > v ) :
     expression( cat( { l }, vconvert_reverse< size_t >( v ) ) ) {}
 
   string print() {
     if ( flat.size() == 1 )
       return get< decl_par_lit >( 0 ).print();
     auto v = map_replace< vector< std::string > >(
-      [&]( size_t e ) { return deitemise< idn >( e ).print(); },
-      flat, flat.begin() + 1, flat.end() );
-    return get< decl_par_lit >( 0 ).print() +
-      printer( vstr_t( v.size(), ", " ), v );
+      [&]( size_t e ) { return deitemise< decl_par_lit >( e ).print(); },
+      flat );
+    return printer( v, vstr_t( v.size() - 1, ", " ) );
   }
 };
 //--------------------------------------------------
@@ -337,6 +337,7 @@ struct decl_par_blocks : expression {
 struct decl_io_lit : expression {
   enum kind { dil_basic, dil_apr };
   
+  decl_io_lit( eref< decl_io_lit > b ) : expression( deitemise( b ).flat ) {}
   decl_io_lit( eref< basic > b ) : expression( { dil_basic, b } ) {}
   decl_io_lit( eref< array_pure_ref > a ) : expression( { dil_apr, a } ) {}
 
@@ -356,17 +357,16 @@ struct decl_io_lit : expression {
 struct decl_io_lits : expression {
   decl_io_lits( eref< decl_io_lit > l ) :
     expression( { l } ) {}
-  decl_io_lits( eref< decl_io_lit > l, string&, vref< idn > v ) :
+  decl_io_lits( eref< decl_io_lit > l, string&, vref< decl_io_lit > v ) :
     expression( cat( { l }, vconvert_reverse< size_t >( v ) ) ) {}
 
   string print() {
     if ( flat.size() == 1 )
       return get< decl_io_lit >( 0 ).print();
     auto v = map_replace< vector< std::string > >(
-      [&]( size_t e ) { return deitemise< idn >( e ).print(); },
-      flat, flat.begin() + 1, flat.end() );
-    return get< decl_par_lit >( 0 ).print() +
-      printer( vstr_t( v.size(), ", " ), v );
+      [&]( size_t e ) { return deitemise< decl_io_lit >( e ).print(); },
+      flat );
+    return printer( v, vstr_t( v.size() - 1, ", " ) );
   }
 };
 //--------------------------------------------------
@@ -481,10 +481,18 @@ struct out : expression {
 //<decl-loc> ::= <decl-loc> <decl>
 //             | <in> <out>
 struct decl_loc : expression {
+  decl_loc( string& ) :
+    expression( vsize_t() ) {}
+  decl_loc( eref< in > i, eref< out > o ) :
+    expression( { i, o } ) {}
   decl_loc( eref< in > i, eref< out > o, vref< decl > d ) :
     expression( cat( { i, o }, vconvert_reverse< size_t >( d ) ) ) {}
 
   string print() {
+    if ( flat.empty() )
+      return "";
+    if ( flat.size() == 2 )
+      return printer( extractor< in, out >( 0 ), { "\n" } );
     auto v = map_replace< vector< std::string > >(
       [&]( size_t e ) { return deitemise< decl >( e ).print(); },
       flat, flat.begin() + 2, flat.end() );
@@ -765,6 +773,8 @@ using nts_body = compilation< '\n', decl_loc, statemarks, transitions >;
 //--------------------Nts-basic class---------------
 //<Nts-basic> ::= <annotations> <idn> '{' <nts-body> '}'
 struct nts_basic : expression {
+  nts_basic( eref< nts_basic > n ) :
+    expression( deitemise( n ).flat ) {}
   nts_basic( eref< annotations > a, eref< idn > i, string&, eref< nts_body > b,
               string& ) :
     expression( { a, i, b } ) {}
@@ -775,3 +785,92 @@ struct nts_basic : expression {
   }
 };
 //--------------------------------------------------
+
+//--------------------------------------------------
+//--------------------Instance class----------------
+//<instance> ::= <idn> [ <arith-term> ]
+struct instance : expression {
+  instance( eref< instance > i ) : expression( deitemise( i ).flat ) {}
+  instance( eref< idn > i, string&, eref< arith_term > a, string& ) :
+    expression( { i, a } ) {}
+
+  string print() {
+    return printer( extractor< idn, arith_term >( 0 ), { "[", "]" } );
+  }
+};
+//--------------------------------------------------
+
+//--------------------------------------------------
+//--------------------Inst-list class---------------
+//<inst-list> ::= <instance>
+//              | <inst-list> , <instance>
+struct inst_list : expression {
+  inst_list( vref< instance > a ) :
+    expression( vconvert_reverse< size_t >( a ) ) {}
+
+  string print() {
+    auto v = map_replace< vector< std::string > >(
+      [&]( size_t e ) { return deitemise< instance >( e ).print(); }, flat );
+    return printer( v, vstr_t( v.size() - 1, ", " ) );
+  }
+};
+//--------------------------------------------------
+
+//--------------------------------------------------
+//--------------------Instances class----------------
+//<instances> ::= instances <inst-list> ;
+struct instances : expression {
+  instances( string&, eref< inst_list > l, string& ) : expression( { l } ) {}
+
+  string print() {
+    return printer( { "instances ", ";" }, extractor< inst_list >( 0 ) );
+  }
+};
+//--------------------------------------------------
+
+//--------------------------------------------------
+//--------------------Nts-name class----------------
+//<nts-name> ::= <annotations> nts <idn> ;
+struct nts_name : expression {
+  nts_name( eref< annotations > a, string&, eref< idn > i, string& ) :
+    expression( { a, i } ) {}
+
+  string print() {
+    return printer( extractor< annotations, idn >( 0 ), { "\nnts ", ";" } );
+  }
+};
+//--------------------------------------------------
+
+//--------------------------------------------------
+//--------------------Init class--------------------
+//<init> ::= init <formula> ;
+struct init : expression {
+  init( string&, eref< formula > f, string& ) : expression( { f } ) {}
+
+  string print() {
+    return "init " + get< formula >( 0 ).print() + ";";
+  }
+};
+//--------------------------------------------------
+
+//--------------------------------------------------
+//--------------------Nts-list class----------------
+//<nts-list> ::= <nts-basic> <nts-list>
+//             | epsilon
+struct nts_list : expression {
+  nts_list( string& ) :
+    expression( vsize_t() ) {}
+  nts_list( vref< nts_basic > a ) :
+    expression( vconvert_reverse< size_t >( a ) ) {}
+
+  string print() {
+    if ( flat.empty() )
+      return "";
+    auto v = map_replace< vector< std::string > >(
+      [&]( size_t e ) { return deitemise< nts_basic >( e ).print(); }, flat );
+    return printer( v, vstr_t( v.size() - 1, "\n\n" ) );
+  }
+};
+//--------------------------------------------------
+
+using nts = compilation< '\n', nts_name, decl_glob, init, instances, nts_list >;

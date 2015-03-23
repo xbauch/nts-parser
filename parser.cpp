@@ -4,14 +4,14 @@
 
 #include "tools/data.h"
 #include "tools/logic.h"
-#include "parsers/basics.h"
+#include "parsers/globals.h"
 
 using namespace std;
 
 template< typename T >
 eref< T > parse( char* file ) {
   stream_range in( file ); 
-  auto const q_parser = first_token
+  auto const q_parser = commented_first
                      && parser< T >
                      && is_last;
   eref< T > q {};
@@ -29,6 +29,6 @@ int main( int argc, char** argv ) {
     return 1;
   }
 
-  cout << deitemise( parse< nts_basic >( argv[ 1 ] ) ).print() << "foo" << endl;
+  cout << deitemise( parse< nts >( argv[ 1 ] ) ).print() << "foo" << endl;
   return 0;
 }
